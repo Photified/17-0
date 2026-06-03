@@ -164,7 +164,7 @@ function ensureRollPanel() {
   rollPanel.id = "rollPanel";
   rollPanel.className = "roll-panel";
   rollPanel.innerHTML = `
-    <div class="roll-panel-top">
+    <div class="roll-panel-top" id="rollPanelTop">
       <div>
         <div class="roll-kicker">Current Roll</div>
         <h3 id="rollTitle">Ready</h3>
@@ -178,6 +178,13 @@ function ensureRollPanel() {
     draftScreen.insertBefore(rollPanel, slotsGrid);
   } else if (draftScreen) {
     draftScreen.appendChild(rollPanel);
+  }
+
+  // Grab the buttons from the bottom and move them into the top panel
+  const rollPanelTop = document.getElementById("rollPanelTop");
+  const draftActions = document.querySelector(".draft-actions");
+  if (rollPanelTop && draftActions) {
+    rollPanelTop.appendChild(draftActions);
   }
 
   rollTitle = document.getElementById("rollTitle");
@@ -194,7 +201,7 @@ function injectRollPanelStyles() {
     .roll-panel { margin: 0 0 18px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)), radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 14rem); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); }
     .roll-panel.rolling { animation: rollPanelPulse 0.35s infinite alternate; }
     @keyframes rollPanelPulse { from { transform: translateY(0); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); } to { transform: translateY(-3px); box-shadow: 0 20px 44px rgba(55, 214, 122, 0.24); } }
-    .roll-panel-top { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    .roll-panel-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
     .roll-kicker { margin-bottom: 6px; color: var(--gold); font-size: 0.78rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.1em; }
     #rollTitle { margin: 0 0 6px; font-size: clamp(1.8rem, 5vw, 3.2rem); line-height: 0.95; letter-spacing: -0.06em; }
     #rollSubline { margin: 0; color: var(--muted); line-height: 1.35; }
@@ -412,9 +419,21 @@ function renderStats(stats) {
 function updateDraftControls() {
   const complete = draftComplete();
   const hasActiveRoll = Boolean(currentRoll);
+  
   rollBtn.disabled = complete || hasActiveRoll || isRolling;
   rerollBtn.disabled = complete || rerollUsed || !hasActiveRoll || isRolling;
   simulateBtn.disabled = !complete || isRolling;
+
+  // Toggle button visibility based on completion status
+  if (complete) {
+    simulateBtn.style.display = "inline-block";
+    rollBtn.style.display = "none";
+    rerollBtn.style.display = "none";
+  } else {
+    simulateBtn.style.display = "none";
+    rollBtn.style.display = "inline-block";
+    rerollBtn.style.display = "inline-block";
+  }
 
   if (rerollUsed) {
     rerollPill.textContent = "Re-roll Used";
