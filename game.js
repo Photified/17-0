@@ -470,7 +470,9 @@ function calculateSeason(currentRoster) {
   const offenseRaw = qbScore * 0.40 + rbScore * 0.20 + wr1Score * 0.22 + wr2Score * 0.18;
   const passGame = (qbScore + wr1Score + wr2Score) / 3;
   const runGame = rbScore;
-  const balance = clamp(Math.round(100 - Math.abs(passGame - runGame) * 0.85), 50, 100);
+  
+  // Softer balance penalty so it doesn't drag stars down completely
+  const balance = clamp(Math.round(100 - Math.abs(passGame - runGame) * 0.78), 60, 100);
   const balanceBonus = (balance - 88) * 0.15;
 
   const offense = clamp(Math.round(offenseRaw + balanceBonus), 60, 100);
@@ -478,16 +480,15 @@ function calculateSeason(currentRoster) {
   
   const sameTeamBonus = calculateSameTeamBonus(currentRoster);
   
-  // New Penalty: Era Clash (if players are from completely mismatched eras, chemistry takes a hit)
+  // Era Clash Penalty kept intact but affects a slightly softer overall formula
   const eras = [qb.era, rb.era, wr1.era, wr2.era, def.era];
   const uniqueEras = new Set(eras).size;
   const eraClashPenalty = uniqueEras >= 4 ? 3.5 : (uniqueEras === 3 ? 1.5 : 0);
 
-  // Baseline calculation shifts down to make all-star status harder to abuse
   const totalBeforeVolatility = offense * 0.55 + defense * 0.35 + balance * 0.10 + sameTeamBonus - eraClashPenalty;
   
-  // Increased volatility window (-7.5 to +4.5) to introduce brutal upsets on any given Sunday
-  const volatility = randomBetween(-7.5, 4.5);
+  // Less brutal volatility window
+  const volatility = randomBetween(-4.5, 3.5);
   const rerollTax = rerollUsed ? 1.0 : 0;
 
   const total = clamp(Math.round(totalBeforeVolatility + volatility - rerollTax), 50, 100);
@@ -500,25 +501,26 @@ function calculateSameTeamBonus(currentRoster) {
   const counts = {};
   teams.forEach((team) => { counts[team] = (counts[team] || 0) + 1; });
   const max = Math.max(...Object.values(counts));
-  if (max >= 4) return 3.5; // Raised slightly to incentivize chemistry over pure individual stacking
+  if (max >= 4) return 3.5; 
   if (max === 3) return 1.8;
   if (max === 2) return 0.5;
   return 0;
 }
 
 function scoreToWins(total, offense, defense, balance) {
-  // Completely restructured tier bands to ensure 15+ wins require absolute mechanical layout perfection
+  // Fairer tier distributions for high ratings
   let wins;
-  if (total < 75) wins = weightedRandom([[3,10],[4,15],[5,20],[6,25],[7,20],[8,10]]);
-  else if (total < 82) wins = weightedRandom([[7,10],[8,20],[9,25],[10,25],[11,15],[12,5]]);
-  else if (total < 88) wins = weightedRandom([[10,12],[11,20],[12,28],[13,25],[14,15]]);
-  else if (total < 93) wins = weightedRandom([[11,10],[12,20],[13,30],[14,25],[15,15]]);
-  else if (total < 96) wins = weightedRandom([[13,15],[14,35],[15,35],[16,15]]);
-  else wins = weightedRandom([[14,10],[15,25],[16,45],[17,20]]);
+  if (total < 75) wins = weightedRandom([[4,10],[5,20],[6,25],[7,25],[8,20]]);
+  else if (total < 82) wins = weightedRandom([[7,5],[8,15],[9,25],[10,30],[11,20],[12,5]]);
+  else if (total < 88) wins = weightedRandom([[10,10],[11,20],[12,30],[13,25],[14,15]]);
+  else if (total < 93) wins = weightedRandom([[12,10],[13,25],[14,35],[15,20],[16,10]]);
+  else if (total < 96) wins = weightedRandom([[13,5],[14,20],[15,45],[16,30]]);
+  else wins = weightedRandom([[15,15],[16,50],[17,35]]); 
 
-  // Tightened restrictions on elite achievements
-  if (wins === 17 && !(offense >= 98 && defense >= 97 && balance >= 92)) wins = 16;
-  if (wins === 16 && !(offense >= 94 && defense >= 92 && balance >= 88)) wins = 15;
+  // More attainable gatekeeping thresholds for perfect seasons
+  if (wins === 17 && !(offense >= 96 && defense >= 94 && balance >= 88)) wins = 16;
+  if (wins === 16 && !(offense >= 92 && defense >= 90 && balance >= 84)) wins = 15;
+  
   return clamp(wins, 0, 17);
 }
 
