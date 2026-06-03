@@ -7,10 +7,11 @@ const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
   "./style.css",
+  "./players.js",
   "./game.js",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
