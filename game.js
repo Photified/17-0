@@ -38,6 +38,7 @@ const MAX_CHOICES = 12;
 const ROLL_TICKS = 24;
 const ROLL_INTERVAL_MS = 70;
 
+const playerPool = window.NFL17_PLAYERS.playerPool;
 
 let roster = {};
 let rerollUsed = false;
@@ -502,42 +503,9 @@ function getCandidatesForRoll(team, era) {
     .filter((player) => player.team === team && player.era === era)
     .map((player) => ({ ...player, matchType: "Exact" }));
 
-  const sameTeam = eligible
-    .filter((player) => player.team === team && player.era !== era)
-    .map((player) => ({ ...player, matchType: "Team" }));
+  let candidates = dedupePlayers(takeRandomWeighted(exact, MAX_CHOICES));
 
-  const sameEra = eligible
-    .filter((player) => player.era === era && player.team !== team)
-    .map((player) => ({ ...player, matchType: "Era" }));
-
-  const wildcards = eligible
-    .filter((player) => player.team !== team && player.era !== era)
-    .map((player) => ({ ...player, matchType: "Wildcard" }));
-
-  let candidates = dedupePlayers([
-    ...takeRandomWeighted(exact, 5),
-    ...takeRandomWeighted(sameTeam, 4),
-    ...takeRandomWeighted(sameEra, 4)
-  ]);
-
-  if (candidates.length < MIN_CHOICES) {
-    candidates = dedupePlayers([
-      ...candidates,
-      ...takeRandomWeighted(wildcards, MIN_CHOICES - candidates.length)
-    ]);
-  }
-
-  if (candidates.length < MIN_CHOICES) {
-    candidates = dedupePlayers([
-      ...candidates,
-      ...takeRandomWeighted(
-        eligible.map((player) => ({ ...player, matchType: "Fallback" })),
-        MIN_CHOICES - candidates.length
-      )
-    ]);
-  }
-
-  return shuffleArray(candidates).slice(0, MAX_CHOICES);
+  return shuffleArray(candidates);
 }
 
 function renderChoices(candidates) {
