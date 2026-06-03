@@ -13,6 +13,7 @@
   - Choices do NOT show stats or overall before selecting
   - Player can fill any still-open compatible slot
   - WR choices show Fill WR1 / Fill WR2 when both are open
+  - Help modal includes PWA install button support
 */
 
 const ROSTER_SLOTS = ["QB", "RB", "WR1", "WR2", "DEF"];
@@ -44,6 +45,7 @@ let rerollUsed = false;
 let lastResultText = "";
 let currentRoll = null;
 let isRolling = false;
+let deferredInstallPrompt = null;
 
 const screens = {
   intro: document.getElementById("introScreen"),
@@ -61,6 +63,8 @@ const helpBtn = document.getElementById("helpBtn");
 const helpModal = document.getElementById("helpModal");
 const draftInstruction = document.getElementById("draftInstruction");
 const rerollPill = document.getElementById("rerollPill");
+const installBtn = document.getElementById("installBtn");
+const installHelpText = document.getElementById("installHelpText");
 
 const recordText = document.getElementById("recordText");
 const resultSummary = document.getElementById("resultSummary");
@@ -90,6 +94,58 @@ document.querySelectorAll("[data-close-modal]").forEach((element) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeHelp();
 });
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  updateInstallButton();
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  updateInstallButton(true);
+});
+
+if (installBtn) {
+  installBtn.addEventListener("click", installApp);
+}
+
+updateInstallButton();
+
+function installApp() {
+  if (!deferredInstallPrompt) {
+    if (installHelpText) installHelpText.hidden = false;
+    return;
+  }
+
+  deferredInstallPrompt.prompt();
+
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    updateInstallButton();
+  });
+}
+
+function updateInstallButton(installed = false) {
+  if (!installBtn) return;
+
+  if (installed) {
+    installBtn.hidden = true;
+    if (installHelpText) {
+      installHelpText.hidden = false;
+      installHelpText.textContent = "App installed.";
+    }
+    return;
+  }
+
+  if (deferredInstallPrompt) {
+    installBtn.hidden = false;
+    installBtn.disabled = false;
+    if (installHelpText) installHelpText.hidden = true;
+  } else {
+    installBtn.hidden = true;
+  }
+}
 
 function startDraft() {
   roster = {};
@@ -796,11 +852,16 @@ async function copyResult() {
 function openHelp() {
   helpModal.classList.remove("hidden");
   helpModal.setAttribute("aria-hidden", "false");
+  updateInstallButton();
 }
 
 function closeHelp() {
   helpModal.classList.add("hidden");
   helpModal.setAttribute("aria-hidden", "true");
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function uniqueValues(values) {
