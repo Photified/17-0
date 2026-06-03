@@ -80,7 +80,6 @@ h1 {
   margin-bottom: 4px;
   font-size: clamp(2.4rem, 8vw, 5.2rem);
   line-height: 0.88;
-  letter-spacing: -0.08em;
   color: var(--text);
   text-shadow:
     0 4px 0 rgba(0, 0, 0, 0.4),
@@ -525,7 +524,6 @@ h1 {
   margin-bottom: 10px;
   font-size: clamp(4rem, 14vw, 9rem);
   line-height: 0.8;
-  letter-spacing: -0.09em;
   color: var(--gold);
   text-shadow:
     0 6px 0 rgba(0, 0, 0, 0.5),
