@@ -1,21 +1,5 @@
 "use strict";
 
-/*
-  17-0 game.js
-
-  Requires players.js loaded first:
-  window.NFL17_PLAYERS.playerPool
-
-  Main changes:
-  - Player data lives in players.js
-  - Lineup stays separate from roll choices
-  - Visual era/team roll animation
-  - Choices do NOT show stats or overall before selecting
-  - Player can fill any still-open compatible slot
-  - WR choices show Fill WR1 / Fill WR2 when both are open
-  - Help modal includes PWA install button support
-*/
-
 const ROSTER_SLOTS = ["QB", "RB", "WR1", "WR2", "DEF"];
 
 const slotLabels = {
@@ -33,7 +17,6 @@ const POSITION_TO_SLOTS = {
   DEF: ["DEF"]
 };
 
-const MIN_CHOICES = 8;
 const MAX_CHOICES = 12;
 const ROLL_TICKS = 24;
 const ROLL_INTERVAL_MS = 70;
@@ -117,9 +100,7 @@ function installApp() {
     if (installHelpText) installHelpText.hidden = false;
     return;
   }
-
   deferredInstallPrompt.prompt();
-
   deferredInstallPrompt.userChoice.finally(() => {
     deferredInstallPrompt = null;
     updateInstallButton();
@@ -128,7 +109,6 @@ function installApp() {
 
 function updateInstallButton(installed = false) {
   if (!installBtn) return;
-
   if (installed) {
     installBtn.hidden = true;
     if (installHelpText) {
@@ -137,7 +117,6 @@ function updateInstallButton(installed = false) {
     }
     return;
   }
-
   if (deferredInstallPrompt) {
     installBtn.hidden = false;
     installBtn.disabled = false;
@@ -158,7 +137,7 @@ function startDraft() {
   resetSlotCards();
   resetRollPanel();
 
-  draftInstruction.textContent = "Roll an era and team to start building your roster.";
+  draftInstruction.textContent = "Roll an era or a team to start building your roster.";
   showScreen("draft");
   updateDraftControls();
 }
@@ -187,13 +166,12 @@ function ensureRollPanel() {
   rollPanel = document.createElement("section");
   rollPanel.id = "rollPanel";
   rollPanel.className = "roll-panel";
-
   rollPanel.innerHTML = `
     <div class="roll-panel-top">
       <div>
         <div class="roll-kicker">Current Roll</div>
         <h3 id="rollTitle">Ready</h3>
-        <p id="rollSubline">Roll to reveal an era and team.</p>
+        <p id="rollSubline">Roll to reveal an era or a team.</p>
       </div>
     </div>
     <div id="rollChoices" class="roll-choices"></div>
@@ -208,167 +186,40 @@ function ensureRollPanel() {
   rollTitle = document.getElementById("rollTitle");
   rollSubline = document.getElementById("rollSubline");
   rollChoices = document.getElementById("rollChoices");
-
   injectRollPanelStyles();
 }
 
 function injectRollPanelStyles() {
   if (document.getElementById("rollPanelStyles")) return;
-
   const style = document.createElement("style");
   style.id = "rollPanelStyles";
   style.textContent = `
-    .roll-panel {
-      margin: 0 0 18px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background:
-        linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)),
-        radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 14rem);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
-    }
-
-    .roll-panel.rolling {
-      animation: rollPanelPulse 0.35s infinite alternate;
-    }
-
-    @keyframes rollPanelPulse {
-      from {
-        transform: translateY(0);
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
-      }
-
-      to {
-        transform: translateY(-3px);
-        box-shadow: 0 20px 44px rgba(55, 214, 122, 0.24);
-      }
-    }
-
-    .roll-panel-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-
-    .roll-kicker {
-      margin-bottom: 6px;
-      color: var(--gold);
-      font-size: 0.78rem;
-      font-weight: 1000;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    #rollTitle {
-      margin: 0 0 6px;
-      font-size: clamp(1.8rem, 5vw, 3.2rem);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
-    }
-
-    #rollSubline {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-
-    .roll-choices {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .roll-empty {
-      padding: 14px;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--muted);
-      background: rgba(255, 255, 255, 0.045);
-    }
-
-    .pick-card {
-      display: grid;
-      gap: 10px;
-      padding: 13px;
-      border: 1px solid rgba(247, 201, 72, 0.22);
-      border-radius: var(--radius-sm);
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .pick-card h4 {
-      margin: 0;
-      font-size: 1rem;
-      line-height: 1.12;
-      letter-spacing: -0.03em;
-    }
-
-    .pick-meta {
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .pick-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .pick-tag {
-      display: inline-flex;
-      width: fit-content;
-      padding: 4px 7px;
-      border-radius: 999px;
-      color: var(--gold);
-      background: rgba(247, 201, 72, 0.09);
-      border: 1px solid rgba(247, 201, 72, 0.22);
-      font-size: 0.66rem;
-      font-weight: 1000;
-      text-transform: uppercase;
-    }
-
-    .fill-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-    }
-
-    .fill-btn {
-      flex: 1 1 auto;
-      min-width: 92px;
-      padding: 9px 10px;
-      border: 0;
-      border-radius: 999px;
-      color: #061008;
-      background: linear-gradient(180deg, var(--gold), var(--gold-2));
-      font-size: 0.78rem;
-      font-weight: 1000;
-    }
-
-    .fill-btn:hover,
-    .fill-btn:focus-visible {
-      transform: translateY(-1px);
-      outline: none;
-    }
-
-    @media (max-width: 760px) {
-      .roll-choices {
-        grid-template-columns: 1fr;
-      }
-    }
+    .roll-panel { margin: 0 0 18px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)), radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 14rem); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); }
+    .roll-panel.rolling { animation: rollPanelPulse 0.35s infinite alternate; }
+    @keyframes rollPanelPulse { from { transform: translateY(0); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); } to { transform: translateY(-3px); box-shadow: 0 20px 44px rgba(55, 214, 122, 0.24); } }
+    .roll-panel-top { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    .roll-kicker { margin-bottom: 6px; color: var(--gold); font-size: 0.78rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.1em; }
+    #rollTitle { margin: 0 0 6px; font-size: clamp(1.8rem, 5vw, 3.2rem); line-height: 0.95; letter-spacing: -0.06em; }
+    #rollSubline { margin: 0; color: var(--muted); line-height: 1.35; }
+    .roll-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .roll-empty { padding: 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--muted); background: rgba(255, 255, 255, 0.045); }
+    .pick-card { display: grid; gap: 10px; padding: 13px; border: 1px solid rgba(247, 201, 72, 0.22); border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.06); }
+    .pick-card h4 { margin: 0; font-size: 1rem; line-height: 1.12; letter-spacing: -0.03em; }
+    .pick-meta { color: var(--muted); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
+    .pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pick-tag { display: inline-flex; width: fit-content; padding: 4px 7px; border-radius: 999px; color: var(--gold); background: rgba(247, 201, 72, 0.09); border: 1px solid rgba(247, 201, 72, 0.22); font-size: 0.66rem; font-weight: 1000; text-transform: uppercase; }
+    .fill-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+    .fill-btn { flex: 1 1 auto; min-width: 92px; padding: 9px 10px; border: 0; border-radius: 999px; color: #061008; background: linear-gradient(180deg, var(--gold), var(--gold-2)); font-size: 0.78rem; font-weight: 1000; }
+    .fill-btn:hover, .fill-btn:focus-visible { transform: translateY(-1px); outline: none; }
+    @media (max-width: 760px) { .roll-choices { grid-template-columns: 1fr; } }
   `;
-
   document.head.appendChild(style);
 }
 
 function resetRollPanel() {
   rollPanel.classList.remove("rolling");
   rollTitle.textContent = "Ready";
-  rollSubline.textContent = "Roll to reveal an era and team.";
+  rollSubline.textContent = "Roll to reveal an era or a team.";
   rollChoices.innerHTML = `<div class="roll-empty">Choices will appear here after the roll.</div>`;
 }
 
@@ -405,28 +256,23 @@ function getOpenSlotsForPlayer(player) {
 
 function rollBoard() {
   if (draftComplete() || currentRoll || isRolling) return;
-
+  
   const finalRoll = getRandomRoll();
   const rollSequence = buildRollSequence(finalRoll);
-
+  
   currentRoll = null;
   isRolling = true;
-
   rollChoices.innerHTML = `<div class="roll-empty">Rolling...</div>`;
   rollPanel.classList.add("rolling");
-  draftInstruction.textContent = "Rolling era and team...";
+  draftInstruction.textContent = "Rolling era or team...";
   updateDraftControls();
 
   let tick = 0;
-
   const timer = window.setInterval(() => {
     const roll = rollSequence[tick];
-
-    rollTitle.textContent = `${roll.era} · ${roll.team}`;
+    rollTitle.textContent = `${roll.type}: ${roll.value}`;
     rollSubline.textContent = "Rolling...";
-
     tick += 1;
-
     if (tick >= rollSequence.length) {
       window.clearInterval(timer);
       landRoll(finalRoll);
@@ -435,45 +281,29 @@ function rollBoard() {
 }
 
 function buildRollSequence(finalRoll) {
-  const eras = getEras();
-  const teams = getTeams();
+  const options = finalRoll.type === "Team" ? getTeams() : getEras();
   const sequence = [];
-
   for (let i = 0; i < ROLL_TICKS - 1; i += 1) {
-    sequence.push({
-      era: randomItem(eras),
-      team: randomItem(teams)
-    });
+    sequence.push({ type: finalRoll.type, value: randomItem(options) });
   }
-
   sequence.push(finalRoll);
   return sequence;
 }
 
 function landRoll(roll) {
-  const candidates = getCandidatesForRoll(roll.team, roll.era);
-
-  currentRoll = {
-    team: roll.team,
-    era: roll.era,
-    candidates
-  };
-
+  const candidates = getCandidatesForRoll(roll);
+  currentRoll = { type: roll.type, value: roll.value, candidates };
   isRolling = false;
   rollPanel.classList.remove("rolling");
-
-  rollTitle.textContent = `${roll.era} · ${roll.team}`;
+  rollTitle.textContent = `${roll.type}: ${roll.value}`;
   rollSubline.textContent = "Select a player or unit, then choose which open slot to fill.";
-
   renderChoices(candidates);
-
-  draftInstruction.textContent = `Roll landed on ${roll.era} · ${roll.team}. Pick from the roll panel.`;
+  draftInstruction.textContent = `Roll landed on ${roll.type}: ${roll.value}. Pick from the roll panel.`;
   updateDraftControls();
 }
 
 function rerollBoard() {
   if (rerollUsed || draftComplete() || isRolling || !currentRoll) return;
-
   rerollUsed = true;
   currentRoll = null;
   resetRollPanel();
@@ -482,10 +312,13 @@ function rerollBoard() {
 }
 
 function getRandomRoll() {
-  return {
-    era: randomItem(getEras()),
-    team: randomItem(getTeams())
-  };
+  // Flip a coin: 50% chance for a Team, 50% chance for an Era
+  const rollType = Math.random() > 0.5 ? "Team" : "Era";
+  
+  if (rollType === "Team") {
+    return { type: "Team", value: randomItem(getTeams()) };
+  }
+  return { type: "Era", value: randomItem(getEras()) };
 }
 
 function getEras() {
@@ -496,15 +329,25 @@ function getTeams() {
   return uniqueValues(playerPool.map((player) => player.team));
 }
 
-function getCandidatesForRoll(team, era) {
+function getCandidatesForRoll(roll) {
+  // Only look at players who can fill a currently empty slot on the roster
   const eligible = playerPool.filter((player) => getOpenSlotsForPlayer(player).length > 0);
+  
+  let exactMatches = [];
+  
+  if (roll.type === "Team") {
+    exactMatches = eligible
+      .filter((player) => player.team === roll.value)
+      .map((player) => ({ ...player, matchType: "Team Match" }));
+  } else {
+    exactMatches = eligible
+      .filter((player) => player.era === roll.value)
+      .map((player) => ({ ...player, matchType: "Era Match" }));
+  }
 
-  const exact = eligible
-    .filter((player) => player.team === team && player.era === era)
-    .map((player) => ({ ...player, matchType: "Exact" }));
-
-  let candidates = dedupePlayers(takeRandomWeighted(exact, MAX_CHOICES));
-
+  // Deduplicate and grab a random assortment of up to MAX_CHOICES
+  let candidates = dedupePlayers(takeRandomWeighted(exactMatches, MAX_CHOICES));
+  
   return shuffleArray(candidates);
 }
 
@@ -513,17 +356,13 @@ function renderChoices(candidates) {
     rollChoices.innerHTML = `<div class="roll-empty">No valid choices for the remaining open slots. Roll again.</div>`;
     return;
   }
-
   rollChoices.innerHTML = candidates.map((pick, index) => {
     const openSlots = getOpenSlotsForPlayer(pick);
-
     return `
       <article class="pick-card">
         <div>
           <h4>${escapeHtml(pick.name)}</h4>
-          <div class="pick-meta">
-            ${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)}
-          </div>
+          <div class="pick-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)}</div>
         </div>
         <div class="pick-tags">
           <span class="pick-tag">${escapeHtml(pick.matchType)}</span>
@@ -531,9 +370,7 @@ function renderChoices(candidates) {
         </div>
         <div class="fill-buttons">
           ${openSlots.map((slot) => `
-            <button class="fill-btn" type="button" data-choice-index="${index}" data-fill-slot="${slot}">
-              Fill ${escapeHtml(slot)}
-            </button>
+            <button class="fill-btn" type="button" data-choice-index="${index}" data-fill-slot="${slot}">Fill ${escapeHtml(slot)}</button>
           `).join("")}
         </div>
       </article>
@@ -551,17 +388,13 @@ function renderChoices(candidates) {
 
 function selectCandidate(index, slotToFill) {
   if (!currentRoll) return;
-
   const pick = currentRoll.candidates[index];
   if (!pick) return;
-
   const openSlots = getOpenSlotsForPlayer(pick);
   if (!openSlots.includes(slotToFill)) return;
 
   roster[slotToFill] = pick;
-
   renderLockedSlot(slotToFill, pick);
-
   currentRoll = null;
   resetRollPanel();
 
@@ -570,21 +403,17 @@ function selectCandidate(index, slotToFill) {
   } else {
     draftInstruction.textContent = "Selection locked. Roll again for your next open slot.";
   }
-
   updateDraftControls();
 }
 
 function renderLockedSlot(slot, pick) {
   const card = getSlotCard(slot);
   card.className = "slot-card";
-
   card.innerHTML = `
     <div class="slot-label">${slot}</div>
     <div class="slot-content">
       <h3 class="player-name">${escapeHtml(pick.name)}</h3>
-      <div class="player-meta">
-        ${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}
-      </div>
+      <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
       <p>${slotLabels[slot]} locked.</p>
       ${renderStats(pick.stats)}
     </div>
@@ -595,10 +424,7 @@ function renderStats(stats) {
   return `
     <div class="stat-list">
       ${Object.entries(stats).map(([label, value]) => `
-        <div class="stat-line">
-          <span>${escapeHtml(label)}</span>
-          <strong>${escapeHtml(String(value))}</strong>
-        </div>
+        <div class="stat-line"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>
       `).join("")}
     </div>
   `;
@@ -607,7 +433,6 @@ function renderStats(stats) {
 function updateDraftControls() {
   const complete = draftComplete();
   const hasActiveRoll = Boolean(currentRoll);
-
   rollBtn.disabled = complete || hasActiveRoll || isRolling;
   rerollBtn.disabled = complete || rerollUsed || !hasActiveRoll || isRolling;
   simulateBtn.disabled = !complete || isRolling;
@@ -623,20 +448,15 @@ function updateDraftControls() {
 
 function simulateSeason() {
   if (!draftComplete()) return;
-
   const result = calculateSeason(roster);
-
   recordText.textContent = `${result.wins}-${result.losses}`;
   resultSummary.textContent = result.summary;
-
   offenseRating.textContent = result.offense;
   defenseRating.textContent = result.defense;
   balanceRating.textContent = result.balance;
   totalRating.textContent = result.total;
-
   renderFinalRoster(result);
   lastResultText = buildShareText(result);
-
   showScreen("result");
 }
 
@@ -661,7 +481,6 @@ function calculateSeason(currentRoster) {
 
   const offense = clamp(Math.round(offenseRaw + balanceBonus), 60, 103);
   const defense = clamp(Math.round(defScore), 60, 103);
-
   const sameTeamBonus = calculateSameTeamBonus(currentRoster);
   const totalBeforeVolatility = offense * 0.6 + defense * 0.34 + balance * 0.05 + sameTeamBonus;
   const volatility = randomBetween(-2.2, 2.2);
@@ -669,41 +488,14 @@ function calculateSeason(currentRoster) {
 
   const total = clamp(Math.round(totalBeforeVolatility + volatility - rerollTax), 60, 105);
   const wins = scoreToWins(total, offense, defense, balance);
-  const losses = 17 - wins;
-
-  return {
-    wins,
-    losses,
-    offense,
-    defense,
-    balance,
-    total,
-    qbScore,
-    rbScore,
-    wr1Score,
-    wr2Score,
-    defScore,
-    summary: getResultSummary(wins, offense, defense, balance, sameTeamBonus),
-    roster: currentRoster
-  };
+  return { wins, losses: 17 - wins, offense, defense, balance, total, qbScore, rbScore, wr1Score, wr2Score, defScore, summary: getResultSummary(wins, offense, defense, balance, sameTeamBonus), roster: currentRoster };
 }
 
 function calculateSameTeamBonus(currentRoster) {
-  const teams = [
-    currentRoster.QB.team,
-    currentRoster.RB.team,
-    currentRoster.WR1.team,
-    currentRoster.WR2.team,
-    currentRoster.DEF.team
-  ];
-
+  const teams = [currentRoster.QB.team, currentRoster.RB.team, currentRoster.WR1.team, currentRoster.WR2.team, currentRoster.DEF.team];
   const counts = {};
-  teams.forEach((team) => {
-    counts[team] = (counts[team] || 0) + 1;
-  });
-
+  teams.forEach((team) => { counts[team] = (counts[team] || 0) + 1; });
   const max = Math.max(...Object.values(counts));
-
   if (max >= 4) return 2.2;
   if (max === 3) return 1.2;
   if (max === 2) return 0.4;
@@ -712,42 +504,26 @@ function calculateSameTeamBonus(currentRoster) {
 
 function scoreToWins(total, offense, defense, balance) {
   let wins;
+  if (total < 72) wins = weightedRandom([[6,10],[7,20],[8,25],[9,25],[10,20]]);
+  else if (total < 78) wins = weightedRandom([[8,10],[9,22],[10,28],[11,25],[12,15]]);
+  else if (total < 84) wins = weightedRandom([[10,12],[11,24],[12,30],[13,24],[14,10]]);
+  else if (total < 90) wins = weightedRandom([[11,8],[12,18],[13,30],[14,28],[15,16]]);
+  else if (total < 95) wins = weightedRandom([[12,7],[13,17],[14,31],[15,31],[16,14]]);
+  else if (total < 99) wins = weightedRandom([[13,4],[14,15],[15,34],[16,37],[17,10]]);
+  else if (total < 102) wins = weightedRandom([[14,6],[15,27],[16,47],[17,20]]);
+  else wins = weightedRandom([[15,17],[16,43],[17,40]]);
 
-  if (total < 72) {
-    wins = weightedRandom([[6,10],[7,20],[8,25],[9,25],[10,20]]);
-  } else if (total < 78) {
-    wins = weightedRandom([[8,10],[9,22],[10,28],[11,25],[12,15]]);
-  } else if (total < 84) {
-    wins = weightedRandom([[10,12],[11,24],[12,30],[13,24],[14,10]]);
-  } else if (total < 90) {
-    wins = weightedRandom([[11,8],[12,18],[13,30],[14,28],[15,16]]);
-  } else if (total < 95) {
-    wins = weightedRandom([[12,7],[13,17],[14,31],[15,31],[16,14]]);
-  } else if (total < 99) {
-    wins = weightedRandom([[13,4],[14,15],[15,34],[16,37],[17,10]]);
-  } else if (total < 102) {
-    wins = weightedRandom([[14,6],[15,27],[16,47],[17,20]]);
-  } else {
-    wins = weightedRandom([[15,17],[16,43],[17,40]]);
-  }
-
-  if (wins === 17) {
-    const perfectEligible = offense >= 96 && defense >= 94 && balance >= 86;
-    if (!perfectEligible) wins = 16;
-  }
-
+  if (wins === 17 && !(offense >= 96 && defense >= 94 && balance >= 86)) wins = 16;
   return clamp(wins, 0, 17);
 }
 
 function weightedRandom(weightedOptions) {
   const totalWeight = weightedOptions.reduce((sum, option) => sum + option[1], 0);
   let random = Math.random() * totalWeight;
-
   for (const [value, weight] of weightedOptions) {
     random -= weight;
     if (random <= 0) return value;
   }
-
   return weightedOptions[weightedOptions.length - 1][0];
 }
 
@@ -764,14 +540,7 @@ function getResultSummary(wins, offense, defense, balance, sameTeamBonus) {
 }
 
 function renderFinalRoster(result) {
-  const rows = [
-    ["QB", result.roster.QB, result.qbScore],
-    ["RB", result.roster.RB, result.rbScore],
-    ["WR1", result.roster.WR1, result.wr1Score],
-    ["WR2", result.roster.WR2, result.wr2Score],
-    ["DEF", result.roster.DEF, result.defScore]
-  ];
-
+  const rows = [["QB", result.roster.QB, result.qbScore], ["RB", result.roster.RB, result.rbScore], ["WR1", result.roster.WR1, result.wr1Score], ["WR2", result.roster.WR2, result.wr2Score], ["DEF", result.roster.DEF, result.defScore]];
   finalRoster.innerHTML = rows.map(([slot, pick, score]) => `
     <div class="final-row">
       <div class="pos">${slot}</div>
@@ -785,102 +554,27 @@ function renderFinalRoster(result) {
 }
 
 function buildShareText(result) {
-  return [
-    `17-0 Result: ${result.wins}-${result.losses}`,
-    "",
-    `QB: ${result.roster.QB.name} (${result.roster.QB.season})`,
-    `RB: ${result.roster.RB.name} (${result.roster.RB.season})`,
-    `WR1: ${result.roster.WR1.name} (${result.roster.WR1.season})`,
-    `WR2: ${result.roster.WR2.name} (${result.roster.WR2.season})`,
-    `DEF: ${result.roster.DEF.name}`,
-    "",
-    `Offense: ${result.offense}`,
-    `Defense: ${result.defense}`,
-    `Balance: ${result.balance}`,
-    `Total: ${result.total}`
-  ].join("\n");
+  return [`17-0 Result: ${result.wins}-${result.losses}`, "", `QB: ${result.roster.QB.name} (${result.roster.QB.season})`, `RB: ${result.roster.RB.name} (${result.roster.RB.season})`, `WR1: ${result.roster.WR1.name} (${result.roster.WR1.season})`, `WR2: ${result.roster.WR2.name} (${result.roster.WR2.season})`, `DEF: ${result.roster.DEF.name}`, "", `Offense: ${result.offense}`, `Defense: ${result.defense}`, `Balance: ${result.balance}`, `Total: ${result.total}`].join("\n");
 }
 
 async function copyResult() {
   if (!lastResultText) return;
-
   try {
     await navigator.clipboard.writeText(lastResultText);
     shareBtn.textContent = "Copied!";
   } catch (error) {
     shareBtn.textContent = "Copy Failed";
   }
-
-  setTimeout(() => {
-    shareBtn.textContent = "Copy Result";
-  }, 1400);
+  setTimeout(() => { shareBtn.textContent = "Copy Result"; }, 1400);
 }
 
-function openHelp() {
-  helpModal.classList.remove("hidden");
-  helpModal.setAttribute("aria-hidden", "false");
-  updateInstallButton();
-}
-
-function closeHelp() {
-  helpModal.classList.add("hidden");
-  helpModal.setAttribute("aria-hidden", "true");
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function uniqueValues(values) {
-  return [...new Set(values)];
-}
-
-function randomItem(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-function randomBetween(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function takeRandomWeighted(items, count) {
-  return shuffleArray(items)
-    .sort((a, b) => b.rating - a.rating + randomBetween(-10, 10))
-    .slice(0, count);
-}
-
-function shuffleArray(array) {
-  const copy = [...array];
-
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-
-  return copy;
-}
-
-function dedupePlayers(items) {
-  const seen = new Set();
-  const clean = [];
-
-  items.forEach((item) => {
-    const key = `${item.slot}|${item.name}|${item.team}|${item.season}`;
-
-    if (!seen.has(key)) {
-      seen.add(key);
-      clean.push(item);
-    }
-  });
-
-  return clean;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+function openHelp() { helpModal.classList.remove("hidden"); helpModal.setAttribute("aria-hidden", "false"); updateInstallButton(); }
+function closeHelp() { helpModal.classList.add("hidden"); helpModal.setAttribute("aria-hidden", "true"); }
+function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+function uniqueValues(values) { return [...new Set(values)]; }
+function randomItem(array) { return array[Math.floor(Math.random() * array.length)]; }
+function randomBetween(min, max) { return Math.random() * (max - min) + min; }
+function takeRandomWeighted(items, count) { return shuffleArray(items).sort((a, b) => b.rating - a.rating + randomBetween(-10, 10)).slice(0, count); }
+function shuffleArray(array) { const copy = [...array]; for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; }
+function dedupePlayers(items) { const seen = new Set(); const clean = []; items.forEach((item) => { const key = `${item.slot}|${item.name}|${item.team}|${item.season}`; if (!seen.has(key)) { seen.add(key); clean.push(item); } }); return clean; }
+function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
