@@ -21,7 +21,6 @@ const MAX_CHOICES = 12;
 const ROLL_TICKS = 24;
 const ROLL_INTERVAL_MS = 70;
 
-const playerPool = window.NFL17_PLAYERS.playerPool;
 
 let roster = {};
 let rerollUsed = false;
