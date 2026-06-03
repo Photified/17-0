@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+
+  <title>17-0</title>
+
+  <meta name="theme-color" content="#10271a" />
+  <meta name="description" content="Build a perfect NFL-style historical roster and chase 17-0." />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+</head>
+
+<body>
+  <div id="appShell">
+    <header class="top-bar">
+      <div>
+        <h1>17-0</h1>
+        <p class="subtitle">Build a perfect historical football season.</p>
+      </div>
+
+      <button id="helpBtn" class="small-btn" type="button">
+        Help
+      </button>
+    </header>
+
+    <main>
+      <section id="introScreen" class="screen active">
+        <div class="hero-card">
+          <div class="badge">NFL-inspired stat simulator</div>
+
+          <h2>Can you build a 17-0 team?</h2>
+
+          <p>
+            Draft one historical player or unit at each position using random
+            team and era rolls. You get one chance to re-roll the board before
+            your season is calculated.
+          </p>
+
+          <div class="rules-grid">
+            <div class="rule-card">
+              <span>1</span>
+              <p>Fill QB, RB, WR1, WR2, and DEF.</p>
+            </div>
+
+            <div class="rule-card">
+              <span>2</span>
+              <p>Each pick is generated from a team and era.</p>
+            </div>
+
+            <div class="rule-card">
+              <span>3</span>
+              <p>Use your one re-roll carefully.</p>
+            </div>
+
+            <div class="rule-card">
+              <span>4</span>
+              <p>Your roster is graded into a 17-game record.</p>
+            </div>
+          </div>
+
+          <button id="startBtn" class="primary-btn" type="button">
+            Start Draft
+          </button>
+        </div>
+      </section>
+
+      <section id="draftScreen" class="screen">
+        <div class="draft-header">
+          <div>
+            <h2>Draft Board</h2>
+            <p id="draftInstruction">
+              Roll a team and era for each roster slot.
+            </p>
+          </div>
+
+          <div class="reroll-status">
+            <span id="rerollPill">Re-roll Available</span>
+          </div>
+        </div>
+
+        <div id="slotsGrid" class="slots-grid">
+          <article class="slot-card empty" data-slot="QB">
+            <div class="slot-label">QB</div>
+            <div class="slot-content">
+              <h3>Quarterback</h3>
+              <p>Waiting for roll...</p>
+            </div>
+          </article>
+
+          <article class="slot-card empty" data-slot="RB">
+            <div class="slot-label">RB</div>
+            <div class="slot-content">
+              <h3>Running Back</h3>
+              <p>Waiting for roll...</p>
+            </div>
+          </article>
+
+          <article class="slot-card empty" data-slot="WR1">
+            <div class="slot-label">WR1</div>
+            <div class="slot-content">
+              <h3>Wide Receiver 1</h3>
+              <p>Waiting for roll...</p>
+            </div>
+          </article>
+
+          <article class="slot-card empty" data-slot="WR2">
+            <div class="slot-label">WR2</div>
+            <div class="slot-content">
+              <h3>Wide Receiver 2</h3>
+              <p>Waiting for roll...</p>
+            </div>
+          </article>
+
+          <article class="slot-card empty" data-slot="DEF">
+            <div class="slot-label">DEF</div>
+            <div class="slot-content">
+              <h3>Defense</h3>
+              <p>Waiting for roll...</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="draft-actions">
+          <button id="rollBtn" class="primary-btn" type="button">
+            Roll Next Pick
+          </button>
+
+          <button id="rerollBtn" class="secondary-btn" type="button" disabled>
+            Re-Roll Team/Era
+          </button>
+
+          <button id="simulateBtn" class="primary-btn ghosted" type="button" disabled>
+            Simulate Season
+          </button>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="screen">
+        <div class="result-card">
+          <div class="result-topline">Season Result</div>
+
+          <h2 id="recordText">0-17</h2>
+
+          <p id="resultSummary">
+            Your season summary will appear here.
+          </p>
+
+          <div class="ratings-grid">
+            <div class="rating-card">
+              <span>Offense</span>
+              <strong id="offenseRating">0</strong>
+            </div>
+
+            <div class="rating-card">
+              <span>Defense</span>
+              <strong id="defenseRating">0</strong>
+            </div>
+
+            <div class="rating-card">
+              <span>Balance</span>
+              <strong id="balanceRating">0</strong>
+            </div>
+
+            <div class="rating-card">
+              <span>Total</span>
+              <strong id="totalRating">0</strong>
+            </div>
+          </div>
+
+          <div id="finalRoster" class="final-roster"></div>
+
+          <div class="result-actions">
+            <button id="restartBtn" class="primary-btn" type="button">
+              Draft Again
+            </button>
+
+            <button id="shareBtn" class="secondary-btn" type="button">
+              Copy Result
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="helpModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="modal-close" type="button" data-close-modal>
+        ×
+      </button>
+
+      <h2 id="helpTitle">How 17-0 Works</h2>
+
+      <p>
+        17-0 is a historical football roster simulator. You do not play games
+        manually. You draft a small roster, then the app uses player and unit
+        ratings to estimate a full 17-game season.
+      </p>
+
+      <ul>
+        <li>Draft slots: QB, RB, WR1, WR2, DEF.</li>
+        <li>Each roll produces a team and era-based historical pick.</li>
+        <li>You get one re-roll for the entire draft board.</li>
+        <li>After the roster is locked, the simulator calculates your record.</li>
+      </ul>
+
+      <p>
+        The perfect 17-0 season is intentionally rare. A stacked roster can
+        still land at 15-2 or 16-1 if the balance is not right.
+      </p>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {
+          // Service worker registration failed silently.
+        });
+      });
+    }
+  </script>
+</body>
+</html>
