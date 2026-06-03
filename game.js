@@ -17,10 +17,8 @@ const POSITION_TO_SLOTS = {
   DEF: ["DEF"]
 };
 
-const MAX_CHOICES = 12;
 const ROLL_TICKS = 24;
 const ROLL_INTERVAL_MS = 70;
-
 
 let roster = {};
 let rerollUsed = false;
@@ -136,7 +134,7 @@ function startDraft() {
   resetSlotCards();
   resetRollPanel();
 
-  draftInstruction.textContent = "Roll an era or a team to start building your roster.";
+  draftInstruction.textContent = "Roll a team franchise to start building your roster.";
   showScreen("draft");
   updateDraftControls();
 }
@@ -170,7 +168,7 @@ function ensureRollPanel() {
       <div>
         <div class="roll-kicker">Current Roll</div>
         <h3 id="rollTitle">Ready</h3>
-        <p id="rollSubline">Roll to reveal an era or a team.</p>
+        <p id="rollSubline">Roll to reveal a team franchise.</p>
       </div>
     </div>
     <div id="rollChoices" class="roll-choices"></div>
@@ -218,8 +216,8 @@ function injectRollPanelStyles() {
 function resetRollPanel() {
   rollPanel.classList.remove("rolling");
   rollTitle.textContent = "Ready";
-  rollSubline.textContent = "Roll to reveal an era or a team.";
-  rollChoices.innerHTML = `<div class="roll-empty">Choices will appear here after the roll.</div>`;
+  rollSubline.textContent = "Roll to reveal a team franchise.";
+  rollChoices.innerHTML = `<div class="roll-empty">History options will appear here after the roll.</div>`;
 }
 
 function resetSlotCards() {
@@ -261,15 +259,15 @@ function rollBoard() {
   
   currentRoll = null;
   isRolling = true;
-  rollChoices.innerHTML = `<div class="roll-empty">Rolling...</div>`;
+  rollChoices.innerHTML = `<div class="roll-empty">Rolling Teams...</div>`;
   rollPanel.classList.add("rolling");
-  draftInstruction.textContent = "Rolling era or team...";
+  draftInstruction.textContent = "Selecting random franchise...";
   updateDraftControls();
 
   let tick = 0;
   const timer = window.setInterval(() => {
     const roll = rollSequence[tick];
-    rollTitle.textContent = `${roll.type}: ${roll.value}`;
+    rollTitle.textContent = roll.value;
     rollSubline.textContent = "Rolling...";
     tick += 1;
     if (tick >= rollSequence.length) {
@@ -280,10 +278,10 @@ function rollBoard() {
 }
 
 function buildRollSequence(finalRoll) {
-  const options = finalRoll.type === "Team" ? getTeams() : getEras();
+  const options = getTeams();
   const sequence = [];
   for (let i = 0; i < ROLL_TICKS - 1; i += 1) {
-    sequence.push({ type: finalRoll.type, value: randomItem(options) });
+    sequence.push({ type: "Team", value: randomItem(options) });
   }
   sequence.push(finalRoll);
   return sequence;
@@ -294,10 +292,10 @@ function landRoll(roll) {
   currentRoll = { type: roll.type, value: roll.value, candidates };
   isRolling = false;
   rollPanel.classList.remove("rolling");
-  rollTitle.textContent = `${roll.type}: ${roll.value}`;
-  rollSubline.textContent = "Select a player or unit, then choose which open slot to fill.";
+  rollTitle.textContent = roll.value;
+  rollSubline.textContent = "Select any historical player or unit from this team's history to fill an open slot.";
   renderChoices(candidates);
-  draftInstruction.textContent = `Roll landed on ${roll.type}: ${roll.value}. Pick from the roll panel.`;
+  draftInstruction.textContent = `Landed on the ${roll.value}. Pick from their franchise history below.`;
   updateDraftControls();
 }
 
@@ -311,17 +309,7 @@ function rerollBoard() {
 }
 
 function getRandomRoll() {
-  // Flip a coin: 50% chance for a Team, 50% chance for an Era
-  const rollType = Math.random() > 0.5 ? "Team" : "Era";
-  
-  if (rollType === "Team") {
-    return { type: "Team", value: randomItem(getTeams()) };
-  }
-  return { type: "Era", value: randomItem(getEras()) };
-}
-
-function getEras() {
-  return uniqueValues(playerPool.map((player) => player.era));
+  return { type: "Team", value: randomItem(getTeams()) };
 }
 
 function getTeams() {
@@ -329,30 +317,22 @@ function getTeams() {
 }
 
 function getCandidatesForRoll(roll) {
-  // Only look at players who can fill a currently empty slot on the roster
+  // Pull all players matching this team franchise who can fill an empty roster slot
   const eligible = playerPool.filter((player) => getOpenSlotsForPlayer(player).length > 0);
   
-  let exactMatches = [];
-  
-  if (roll.type === "Team") {
-    exactMatches = eligible
-      .filter((player) => player.team === roll.value)
-      .map((player) => ({ ...player, matchType: "Team Match" }));
-  } else {
-    exactMatches = eligible
-      .filter((player) => player.era === roll.value)
-      .map((player) => ({ ...player, matchType: "Era Match" }));
-  }
+  const franchiseMatches = eligible
+    .filter((player) => player.team === roll.value)
+    .map((player) => ({ ...player, matchType: "Franchise History" }));
 
-  // Deduplicate and grab a random assortment of up to MAX_CHOICES
-  let candidates = dedupePlayers(takeRandomWeighted(exactMatches, MAX_CHOICES));
+  // Return all history choices matching that franchise, sorted cleanly by era/season
+  let candidates = dedupePlayers(franchiseMatches).sort((a, b) => a.season - b.season);
   
-  return shuffleArray(candidates);
+  return candidates;
 }
 
 function renderChoices(candidates) {
   if (!candidates.length) {
-    rollChoices.innerHTML = `<div class="roll-empty">No valid choices for the remaining open slots. Roll again.</div>`;
+    rollChoices.innerHTML = `<div class="roll-empty">No valid choices left on this team for your remaining open slots. Roll again!</div>`;
     return;
   }
   rollChoices.innerHTML = candidates.map((pick, index) => {
@@ -398,9 +378,9 @@ function selectCandidate(index, slotToFill) {
   resetRollPanel();
 
   if (draftComplete()) {
-    draftInstruction.textContent = "Draft complete. Simulate the season.";
+    draftInstruction.textContent = "Draft complete. Simulate the season!";
   } else {
-    draftInstruction.textContent = "Selection locked. Roll again for your next open slot.";
+    draftInstruction.textContent = "Selection locked. Roll for your next team franchise.";
   }
   updateDraftControls();
 }
@@ -535,7 +515,7 @@ function getResultSummary(wins, offense, defense, balance, sameTeamBonus) {
   if (defense > offense + 8) return "Defense carried hard, but the offense did not create enough weekly separation.";
   if (balance < 80) return "The roster had names, but the fit was shaky. The simulator punished the lack of balance.";
   if (sameTeamBonus > 0) return "The team chemistry helped, but not enough to turn this build into a perfect-season threat.";
-  return "Solid roster, but not a serious 17-0 threat. Draft again and chase a stronger team-era combo.";
+  return "Solid roster, but not a serious 17-0 threat. Draft again and chase a stronger team build.";
 }
 
 function renderFinalRoster(result) {
@@ -573,7 +553,6 @@ function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function uniqueValues(values) { return [...new Set(values)]; }
 function randomItem(array) { return array[Math.floor(Math.random() * array.length)]; }
 function randomBetween(min, max) { return Math.random() * (max - min) + min; }
-function takeRandomWeighted(items, count) { return shuffleArray(items).sort((a, b) => b.rating - a.rating + randomBetween(-10, 10)).slice(0, count); }
 function shuffleArray(array) { const copy = [...array]; for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; }
 function dedupePlayers(items) { const seen = new Set(); const clean = []; items.forEach((item) => { const key = `${item.slot}|${item.name}|${item.team}|${item.season}`; if (!seen.has(key)) { seen.add(key); clean.push(item); } }); return clean; }
 function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
