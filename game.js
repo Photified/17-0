@@ -978,6 +978,16 @@ makeDEF("Steelers Defense","Steelers","2020s",2023,19.1,47,27,343,4)
 
 const playerPool = [...QBs, ...RBs, ...WRs, ...DEFs];
 
+const POSITION_TO_SLOTS = {
+  QB: ["QB"],
+  RB: ["RB"],
+  WR: ["WR1", "WR2"],
+  DEF: ["DEF"]
+};
+
+const MIN_CHOICES = 6;
+const MAX_CHOICES = 10;
+
 function showScreen(screenName) {
   Object.values(screens).forEach((screen) => screen.classList.remove("active"));
   screens[screenName].classList.add("active");
@@ -989,9 +999,11 @@ function startDraft() {
   rerollUsed = false;
   lastResultText = "";
   currentRoll = null;
+
   resetSlotCards();
   updateDraftControls();
-  draftInstruction.textContent = "Roll your QB to start the draft.";
+
+  draftInstruction.textContent = "Roll an era and team to start building your roster.";
   showScreen("draft");
 }
 
@@ -1007,7 +1019,7 @@ function resetSlotCards() {
       <div class="slot-label">${slot}</div>
       <div class="slot-content">
         <h3>${slotLabels[slot]}</h3>
-        <p>Waiting for roll...</p>
+        <p>Waiting for selection...</p>
       </div>
     `;
   });
@@ -1017,80 +1029,174 @@ function getSlotCard(slot) {
   return document.querySelector(`[data-slot="${slot}"]`);
 }
 
-function getDatabaseSlot(slot) {
-  return slot.startsWith("WR") ? "WR" : slot;
+function getOpenSlots() {
+  return ROSTER_SLOTS.filter((slot) => !roster[slot]);
 }
 
-function getEligibleForSlot(slot) {
-  const databaseSlot = getDatabaseSlot(slot);
-  let options = playerPool.filter((player) => player.slot === databaseSlot);
+function draftComplete() {
+  return getOpenSlots().length === 0;
+}
 
-  if (slot === "WR2" && roster.WR1) {
-    const filtered = options.filter((player) => player.name !== roster.WR1.name || player.season !== roster.WR1.season);
-    if (filtered.length) options = filtered;
-  }
-
-  return options;
+function getOpenSlotsForPlayer(player) {
+  const possibleSlots = POSITION_TO_SLOTS[player.slot] || [];
+  return possibleSlots.filter((slot) => !roster[slot]);
 }
 
 function rollCurrentSlot() {
-  if (draftIndex >= ROSTER_SLOTS.length || currentRoll) return;
+  rollBoard();
+}
 
-  const slot = ROSTER_SLOTS[draftIndex];
-  const eligible = getEligibleForSlot(slot);
-  const combos = uniqueCombos(eligible);
+function rollBoard() {
+  if (draftComplete() || currentRoll) return;
 
-  const combo = randomItem(combos);
-  const candidates = eligible
-    .filter((player) => player.team === combo.team && player.era === combo.era)
-    .sort((a, b) => b.rating - a.rating);
+  const roll = getRandomRoll();
+  const candidates = getCandidatesForRoll(roll.team, roll.era);
 
-  currentRoll = { slot, team: combo.team, era: combo.era, candidates };
+  currentRoll = {
+    team: roll.team,
+    era: roll.era,
+    candidates
+  };
 
-  renderChoiceCard(slot, combo.team, combo.era, candidates);
-  draftInstruction.textContent = `${slot} roll: ${combo.team} · ${combo.era}. Select one season.`;
+  renderRollBoard(roll.team, roll.era, candidates);
+  draftInstruction.textContent = `Roll: ${roll.era} · ${roll.team}. Select any player or unit that can fill an open roster slot.`;
   updateDraftControls();
 }
 
-function uniqueCombos(items) {
-  const map = new Map();
+function rerollDraft() {
+  if (rerollUsed || draftComplete() || !currentRoll) return;
 
-  items.forEach((item) => {
-    const key = `${item.team}|${item.era}`;
-    if (!map.has(key)) map.set(key, { team: item.team, era: item.era });
-  });
-
-  return Array.from(map.values());
+  rerollUsed = true;
+  currentRoll = null;
+  clearOpenSlotCards("Waiting for re-roll...");
+  updateDraftControls();
+  rollBoard();
 }
 
-function renderChoiceCard(slot, team, era, candidates) {
-  const card = getSlotCard(slot);
-  card.className = "slot-card";
+function getRandomRoll() {
+  const eras = uniqueValues(playerPool.map((player) => player.era));
+  const teams = uniqueValues(playerPool.map((player) => player.team));
 
-  card.innerHTML = `
-    <div class="slot-label">${slot}</div>
-    <div class="slot-content">
-      <h3>${escapeHtml(team)} · ${escapeHtml(era)}</h3>
-      <p>Select one ${escapeHtml(slotLabels[slot])} season.</p>
-      <div class="choice-list">
-        ${candidates.map((pick, index) => renderChoiceButton(pick, index)).join("")}
-      </div>
-    </div>
-  `;
+  return {
+    era: randomItem(eras),
+    team: randomItem(teams)
+  };
+}
 
-  card.querySelectorAll("[data-choice-index]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const index = Number(button.getAttribute("data-choice-index"));
-      selectCandidate(index);
-    });
+function getCandidatesForRoll(team, era) {
+  const eligible = playerPool.filter((player) => getOpenSlotsForPlayer(player).length > 0);
+
+  const exact = eligible
+    .filter((player) => player.team === team && player.era === era)
+    .map((player) => ({ ...player, matchType: "Exact" }));
+
+  const sameTeam = eligible
+    .filter((player) => player.team === team && player.era !== era)
+    .map((player) => ({ ...player, matchType: "Team" }));
+
+  const sameEra = eligible
+    .filter((player) => player.era === era && player.team !== team)
+    .map((player) => ({ ...player, matchType: "Era" }));
+
+  const wildcards = eligible
+    .filter((player) => player.team !== team && player.era !== era)
+    .map((player) => ({ ...player, matchType: "Wildcard" }));
+
+  let candidates = dedupePlayers([
+    ...takeRandomWeighted(exact, 4),
+    ...takeRandomWeighted(sameTeam, 3),
+    ...takeRandomWeighted(sameEra, 3)
+  ]);
+
+  if (candidates.length < MIN_CHOICES) {
+    candidates = dedupePlayers([
+      ...candidates,
+      ...takeRandomWeighted(wildcards, MIN_CHOICES - candidates.length)
+    ]);
+  }
+
+  if (candidates.length < MIN_CHOICES) {
+    candidates = dedupePlayers([
+      ...candidates,
+      ...takeRandomWeighted(
+        eligible.map((player) => ({ ...player, matchType: "Fallback" })),
+        MIN_CHOICES - candidates.length
+      )
+    ]);
+  }
+
+  return candidates
+    .sort((a, b) => {
+      const weight = {
+        Exact: 5,
+        Team: 4,
+        Era: 3,
+        Wildcard: 2,
+        Fallback: 1
+      };
+
+      const diff = (weight[b.matchType] || 0) - (weight[a.matchType] || 0);
+      if (diff !== 0) return diff;
+      return b.rating - a.rating;
+    })
+    .slice(0, MAX_CHOICES);
+}
+
+function renderRollBoard(team, era, candidates) {
+  const openSlots = getOpenSlots();
+  const rollSlot = openSlots[0];
+
+  openSlots.forEach((slot) => {
+    const card = getSlotCard(slot);
+
+    if (slot === rollSlot) {
+      card.className = "slot-card choosing";
+      card.innerHTML = `
+        <div class="slot-label">ROLL</div>
+        <div class="slot-content">
+          <h3>${escapeHtml(era)} · ${escapeHtml(team)}</h3>
+          <p>Select from this era/team roll. Player position decides which open slot gets filled.</p>
+          <div class="choice-list">
+            ${candidates.map((pick, index) => renderChoiceButton(pick, index)).join("")}
+          </div>
+        </div>
+      `;
+
+      card.querySelectorAll("[data-choice-index]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const index = Number(button.getAttribute("data-choice-index"));
+          selectCandidate(index);
+        });
+      });
+    } else {
+      card.className = "slot-card empty";
+      card.innerHTML = `
+        <div class="slot-label">${slot}</div>
+        <div class="slot-content">
+          <h3>${slotLabels[slot]}</h3>
+          <p>Open slot. Select a matching player from the roll card.</p>
+        </div>
+      `;
+    }
   });
 }
 
 function renderChoiceButton(pick, index) {
+  const openSlots = getOpenSlotsForPlayer(pick);
+
   return `
     <button class="choice-btn" type="button" data-choice-index="${index}">
-      <strong>${escapeHtml(pick.name)}</strong>
-      <span>${escapeHtml(String(pick.season))} · ${escapeHtml(String(pick.rating))} OVR</span>
+      <span class="choice-info">
+        <span class="choice-name-row">
+          <strong>${escapeHtml(pick.name)}</strong>
+          <span class="choice-tag">${escapeHtml(pick.matchType || "Option")}</span>
+        </span>
+        <span class="choice-meta">
+          ${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}
+          · Fills: ${escapeHtml(openSlots.join(" / "))}
+        </span>
+      </span>
+      <span>${escapeHtml(String(pick.rating))} OVR</span>
     </button>
   `;
 }
@@ -1099,19 +1205,25 @@ function selectCandidate(index) {
   if (!currentRoll) return;
 
   const pick = currentRoll.candidates[index];
-  const slot = currentRoll.slot;
+  if (!pick) return;
 
-  roster[slot] = pick;
-  renderLockedSlot(slot, pick);
+  const openSlots = getOpenSlotsForPlayer(pick);
+  if (openSlots.length === 0) return;
+
+  const slotToFill = openSlots[0];
+
+  roster[slotToFill] = pick;
+  renderLockedSlot(slotToFill, pick);
 
   currentRoll = null;
-  draftIndex += 1;
+  draftIndex = ROSTER_SLOTS.length - getOpenSlots().length;
 
-  if (draftIndex < ROSTER_SLOTS.length) {
-    const nextSlot = ROSTER_SLOTS[draftIndex];
-    draftInstruction.textContent = `${slot} locked. Roll your ${nextSlot} next.`;
+  clearOpenSlotCards("Waiting for next roll...");
+
+  if (draftComplete()) {
+    draftInstruction.textContent = "Draft complete. Simulate the season.";
   } else {
-    draftInstruction.textContent = "Draft complete. Use your re-roll or simulate the season.";
+    draftInstruction.textContent = "Selection locked. Roll again for your next open slot.";
   }
 
   updateDraftControls();
@@ -1125,11 +1237,25 @@ function renderLockedSlot(slot, pick) {
     <div class="slot-label">${slot}</div>
     <div class="slot-content">
       <h3 class="player-name">${escapeHtml(pick.name)}</h3>
-      <div class="player-meta">${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
+      <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
       <p>${slotLabels[slot]} · ${pick.rating} OVR</p>
       ${renderStats(pick.stats)}
     </div>
   `;
+}
+
+function clearOpenSlotCards(message) {
+  getOpenSlots().forEach((slot) => {
+    const card = getSlotCard(slot);
+    card.className = "slot-card empty";
+    card.innerHTML = `
+      <div class="slot-label">${slot}</div>
+      <div class="slot-content">
+        <h3>${slotLabels[slot]}</h3>
+        <p>${message}</p>
+      </div>
+    `;
+  });
 }
 
 function renderStats(stats) {
@@ -1145,26 +1271,13 @@ function renderStats(stats) {
   `;
 }
 
-function rerollDraft() {
-  if (rerollUsed || draftIndex < ROSTER_SLOTS.length) return;
-
-  rerollUsed = true;
-  roster = {};
-  draftIndex = 0;
-  currentRoll = null;
-
-  resetSlotCards();
-  updateDraftControls();
-  draftInstruction.textContent = "Re-roll used. Roll your new QB.";
-}
-
 function updateDraftControls() {
-  const draftComplete = draftIndex >= ROSTER_SLOTS.length;
-  const waitingForChoice = Boolean(currentRoll);
+  const complete = draftComplete();
+  const hasActiveRoll = Boolean(currentRoll);
 
-  rollBtn.disabled = draftComplete || waitingForChoice;
-  rerollBtn.disabled = !draftComplete || rerollUsed;
-  simulateBtn.disabled = !draftComplete;
+  rollBtn.disabled = complete || hasActiveRoll;
+  rerollBtn.disabled = complete || rerollUsed || !hasActiveRoll;
+  simulateBtn.disabled = !complete;
 
   if (rerollUsed) {
     rerollPill.textContent = "Re-roll Used";
@@ -1176,7 +1289,7 @@ function updateDraftControls() {
 }
 
 function simulateSeason() {
-  if (draftIndex < ROSTER_SLOTS.length) return;
+  if (!draftComplete()) return;
 
   const result = calculateSeason(roster);
 
@@ -1331,7 +1444,7 @@ function renderFinalRoster(result) {
       <div class="pos">${slot}</div>
       <div>
         <div class="name">${escapeHtml(pick.name)}</div>
-        <div class="player-meta">${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
+        <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
       </div>
       <div class="score">${score}</div>
     </div>
@@ -1380,12 +1493,49 @@ function closeHelp() {
   helpModal.setAttribute("aria-hidden", "true");
 }
 
+function uniqueValues(values) {
+  return [...new Set(values)];
+}
+
 function randomItem(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
 function randomBetween(min, max) {
   return Math.random() * (max - min) + min;
+}
+
+function takeRandomWeighted(items, count) {
+  return shuffleArray(items)
+    .sort((a, b) => b.rating - a.rating + randomBetween(-8, 8))
+    .slice(0, count);
+}
+
+function shuffleArray(array) {
+  const copy = [...array];
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
+}
+
+function dedupePlayers(items) {
+  const seen = new Set();
+  const clean = [];
+
+  items.forEach((item) => {
+    const key = `${item.slot}|${item.name}|${item.team}|${item.season}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      clean.push(item);
+    }
+  });
+
+  return clean;
 }
 
 function escapeHtml(value) {
