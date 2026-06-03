@@ -180,7 +180,6 @@ function ensureRollPanel() {
     draftScreen.appendChild(rollPanel);
   }
 
-  // Grab the buttons from the bottom and move them into the top panel
   const rollPanelTop = document.getElementById("rollPanelTop");
   const draftActions = document.querySelector(".draft-actions");
   if (rollPanelTop && draftActions) {
@@ -324,16 +323,13 @@ function getTeams() {
 }
 
 function getCandidatesForRoll(roll) {
-  // Pull all players matching this team franchise who can fill an empty roster slot
   const eligible = playerPool.filter((player) => getOpenSlotsForPlayer(player).length > 0);
   
   const franchiseMatches = eligible
     .filter((player) => player.team === roll.value)
     .map((player) => ({ ...player, matchType: "Franchise History" }));
 
-  // Return all history choices matching that franchise, sorted cleanly by era/season
   let candidates = dedupePlayers(franchiseMatches).sort((a, b) => a.season - b.season);
-  
   return candidates;
 }
 
@@ -424,7 +420,6 @@ function updateDraftControls() {
   rerollBtn.disabled = complete || rerollUsed || !hasActiveRoll || isRolling;
   simulateBtn.disabled = !complete || isRolling;
 
-  // Toggle button visibility based on completion status
   if (complete) {
     simulateBtn.style.display = "inline-block";
     rollBtn.style.display = "none";
@@ -471,20 +466,31 @@ function calculateSeason(currentRoster) {
   const wr2Score = wr2.rating;
   const defScore = def.rating;
 
-  const offenseRaw = qbScore * 0.42 + rbScore * 0.18 + wr1Score * 0.22 + wr2Score * 0.18;
+  // Offense base math
+  const offenseRaw = qbScore * 0.40 + rbScore * 0.20 + wr1Score * 0.22 + wr2Score * 0.18;
   const passGame = (qbScore + wr1Score + wr2Score) / 3;
   const runGame = rbScore;
-  const balance = clamp(Math.round(100 - Math.abs(passGame - runGame) * 0.72), 70, 100);
-  const balanceBonus = (balance - 85) * 0.11;
+  const balance = clamp(Math.round(100 - Math.abs(passGame - runGame) * 0.85), 50, 100);
+  const balanceBonus = (balance - 88) * 0.15;
 
-  const offense = clamp(Math.round(offenseRaw + balanceBonus), 60, 103);
-  const defense = clamp(Math.round(defScore), 60, 103);
+  const offense = clamp(Math.round(offenseRaw + balanceBonus), 60, 100);
+  const defense = clamp(Math.round(defScore), 60, 100);
+  
   const sameTeamBonus = calculateSameTeamBonus(currentRoster);
-  const totalBeforeVolatility = offense * 0.6 + defense * 0.34 + balance * 0.05 + sameTeamBonus;
-  const volatility = randomBetween(-2.2, 2.2);
-  const rerollTax = rerollUsed ? 0.4 : 0;
+  
+  // New Penalty: Era Clash (if players are from completely mismatched eras, chemistry takes a hit)
+  const eras = [qb.era, rb.era, wr1.era, wr2.era, def.era];
+  const uniqueEras = new Set(eras).size;
+  const eraClashPenalty = uniqueEras >= 4 ? 3.5 : (uniqueEras === 3 ? 1.5 : 0);
 
-  const total = clamp(Math.round(totalBeforeVolatility + volatility - rerollTax), 60, 105);
+  // Baseline calculation shifts down to make all-star status harder to abuse
+  const totalBeforeVolatility = offense * 0.55 + defense * 0.35 + balance * 0.10 + sameTeamBonus - eraClashPenalty;
+  
+  // Increased volatility window (-7.5 to +4.5) to introduce brutal upsets on any given Sunday
+  const volatility = randomBetween(-7.5, 4.5);
+  const rerollTax = rerollUsed ? 1.0 : 0;
+
+  const total = clamp(Math.round(totalBeforeVolatility + volatility - rerollTax), 50, 100);
   const wins = scoreToWins(total, offense, defense, balance);
   return { wins, losses: 17 - wins, offense, defense, balance, total, qbScore, rbScore, wr1Score, wr2Score, defScore, summary: getResultSummary(wins, offense, defense, balance, sameTeamBonus), roster: currentRoster };
 }
@@ -494,24 +500,25 @@ function calculateSameTeamBonus(currentRoster) {
   const counts = {};
   teams.forEach((team) => { counts[team] = (counts[team] || 0) + 1; });
   const max = Math.max(...Object.values(counts));
-  if (max >= 4) return 2.2;
-  if (max === 3) return 1.2;
-  if (max === 2) return 0.4;
+  if (max >= 4) return 3.5; // Raised slightly to incentivize chemistry over pure individual stacking
+  if (max === 3) return 1.8;
+  if (max === 2) return 0.5;
   return 0;
 }
 
 function scoreToWins(total, offense, defense, balance) {
+  // Completely restructured tier bands to ensure 15+ wins require absolute mechanical layout perfection
   let wins;
-  if (total < 72) wins = weightedRandom([[6,10],[7,20],[8,25],[9,25],[10,20]]);
-  else if (total < 78) wins = weightedRandom([[8,10],[9,22],[10,28],[11,25],[12,15]]);
-  else if (total < 84) wins = weightedRandom([[10,12],[11,24],[12,30],[13,24],[14,10]]);
-  else if (total < 90) wins = weightedRandom([[11,8],[12,18],[13,30],[14,28],[15,16]]);
-  else if (total < 95) wins = weightedRandom([[12,7],[13,17],[14,31],[15,31],[16,14]]);
-  else if (total < 99) wins = weightedRandom([[13,4],[14,15],[15,34],[16,37],[17,10]]);
-  else if (total < 102) wins = weightedRandom([[14,6],[15,27],[16,47],[17,20]]);
-  else wins = weightedRandom([[15,17],[16,43],[17,40]]);
+  if (total < 75) wins = weightedRandom([[3,10],[4,15],[5,20],[6,25],[7,20],[8,10]]);
+  else if (total < 82) wins = weightedRandom([[7,10],[8,20],[9,25],[10,25],[11,15],[12,5]]);
+  else if (total < 88) wins = weightedRandom([[10,12],[11,20],[12,28],[13,25],[14,15]]);
+  else if (total < 93) wins = weightedRandom([[11,10],[12,20],[13,30],[14,25],[15,15]]);
+  else if (total < 96) wins = weightedRandom([[13,15],[14,35],[15,35],[16,15]]);
+  else wins = weightedRandom([[14,10],[15,25],[16,45],[17,20]]);
 
-  if (wins === 17 && !(offense >= 96 && defense >= 94 && balance >= 86)) wins = 16;
+  // Tightened restrictions on elite achievements
+  if (wins === 17 && !(offense >= 98 && defense >= 97 && balance >= 92)) wins = 16;
+  if (wins === 16 && !(offense >= 94 && defense >= 92 && balance >= 88)) wins = 15;
   return clamp(wins, 0, 17);
 }
 
@@ -526,15 +533,12 @@ function weightedRandom(weightedOptions) {
 }
 
 function getResultSummary(wins, offense, defense, balance, sameTeamBonus) {
-  if (wins === 17) return "Perfection. Your roster had enough star power, balance, and defensive dominance to run the table.";
-  if (wins === 16) return "Painfully close. This is a monster roster, but one bad Sunday kept it from a perfect season.";
-  if (wins >= 15) return "Elite season. This team would be a nightmare matchup, even if perfection was just out of reach.";
-  if (wins >= 13) return "Contender-level build. Great roster, but the simulator found enough weak spots to cost you a few games.";
-  if (offense > defense + 8) return "Fun offense, not enough stops. This team could score, but the defense dragged the record down.";
-  if (defense > offense + 8) return "Defense carried hard, but the offense did not create enough weekly separation.";
-  if (balance < 80) return "The roster had names, but the fit was shaky. The simulator punished the lack of balance.";
-  if (sameTeamBonus > 0) return "The team chemistry helped, but not enough to turn this build into a perfect-season threat.";
-  return "Solid roster, but not a serious 17-0 threat. Draft again and chase a stronger team build.";
+  if (wins === 17) return "Perfection. Your roster had legendary star power, flawless execution, and defensive dominance to survive the grueling schedule.";
+  if (wins === 16) return "Painfully close. This is a monster roster, but a single mistimed turnover cost you a flawless record.";
+  if (wins >= 14) return "Elite season. Your team is a heavy playoff contender, though the simulator found a vulnerability along the way.";
+  if (wins >= 11) return "Solid playoff team. Good individual stars, but lack of pristine structural balance or identical franchise links caught up to you.";
+  if (wins >= 8) return "Mediocre finish. Stacking stars from random eras without pristine run-pass balance caps your ceiling.";
+  return "Disastrous breakdown. Even big names can crumble under bad layout chemistry and poor weekly execution.";
 }
 
 function renderFinalRoster(result) {

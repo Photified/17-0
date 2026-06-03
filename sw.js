@@ -2,7 +2,7 @@
 
 // Basic Service Worker for 17-0 PWA
 
-const CACHE_NAME = "17-0-cache-v9";
+const CACHE_NAME = "17-0-cache-v10";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
