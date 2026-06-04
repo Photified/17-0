@@ -1,7 +1,7 @@
 "use strict";
 
 // Bumping to v15 to force a complete cache overwrite
-const CACHE_NAME = "17-0-cache-v18";
+const CACHE_NAME = "17-0-cache-v19";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

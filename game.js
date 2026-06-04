@@ -212,7 +212,16 @@ function injectRollPanelStyles() {
     .fill-btn { flex: 1 1 auto; min-width: 80px; padding: 9px 10px; border: 0; border-radius: 4px; color: #061008; background: linear-gradient(180deg, var(--gold), var(--gold-2)); font-size: 0.78rem; font-weight: 1000; }
     .fill-btn:hover, .fill-btn:focus-visible { transform: translateY(-1px); outline: none; }
     @media (max-width: 980px) { .roll-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 620px) { .roll-choices { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { 
+      .roll-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } 
+      .pick-card { padding: 10px; gap: 8px; }
+      .pick-card-header { flex-direction: column; gap: 4px; }
+      .pick-card h4 { font-size: 0.85rem; }
+      .pick-meta { font-size: 0.65rem; }
+      .pick-tag { font-size: 0.6rem; padding: 3px 5px; }
+      .fill-buttons { gap: 5px; }
+      .fill-btn { font-size: 0.7rem; padding: 7px; min-width: 0; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -392,7 +401,7 @@ function renderLockedSlot(slot, pick) {
     <div class="slot-label">${slot}</div>
     <div class="slot-content">
       <h3 class="player-name">${escapeHtml(pick.name)}</h3>
-      <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(String(pick.season))}</div>
+      <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(String(pick.season))}</div>
       ${renderStats(pick.stats)}
     </div>
   `;
@@ -563,7 +572,6 @@ function renderFinalRoster(result) {
     </div>
   `).join("");
 
-  // Attach interactive click listeners for expanding the player stats
   const accordions = finalRoster.querySelectorAll('.accordion-row');
   accordions.forEach(acc => {
     acc.addEventListener('click', () => {
