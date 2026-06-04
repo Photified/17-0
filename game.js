@@ -204,12 +204,12 @@ function injectRollPanelStyles() {
     .roll-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .roll-empty { grid-column: 1 / -1; padding: 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--muted); background: rgba(255, 255, 255, 0.045); }
     .pick-card { display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 13px; border: 1px solid rgba(247, 201, 72, 0.22); border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.06); }
+    .pick-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .pick-card h4 { margin: 0; font-size: 1rem; line-height: 1.12; letter-spacing: -0.03em; }
-    .pick-meta { color: var(--muted); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
-    .pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .pick-tag { display: inline-flex; width: fit-content; padding: 4px 7px; border-radius: 999px; color: var(--gold); background: rgba(247, 201, 72, 0.09); border: 1px solid rgba(247, 201, 72, 0.22); font-size: 0.66rem; font-weight: 1000; text-transform: uppercase; }
+    .pick-meta { color: var(--muted); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 2px; }
+    .pick-tag { display: inline-flex; flex-shrink: 0; padding: 4px 7px; border-radius: 4px; color: var(--gold); background: rgba(247, 201, 72, 0.09); border: 1px solid rgba(247, 201, 72, 0.22); font-size: 0.7rem; font-weight: 1000; text-transform: uppercase; }
     .fill-buttons { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
-    .fill-btn { flex: 1 1 auto; min-width: 80px; padding: 9px 10px; border: 0; border-radius: 999px; color: #061008; background: linear-gradient(180deg, var(--gold), var(--gold-2)); font-size: 0.78rem; font-weight: 1000; }
+    .fill-btn { flex: 1 1 auto; min-width: 80px; padding: 9px 10px; border: 0; border-radius: 4px; color: #061008; background: linear-gradient(180deg, var(--gold), var(--gold-2)); font-size: 0.78rem; font-weight: 1000; }
     .fill-btn:hover, .fill-btn:focus-visible { transform: translateY(-1px); outline: none; }
     @media (max-width: 980px) { .roll-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 620px) { .roll-choices { grid-template-columns: 1fr; } }
@@ -340,11 +340,11 @@ function renderChoices(candidates) {
     const openSlots = getOpenSlotsForPlayer(pick);
     return `
       <article class="pick-card">
-        <div>
-          <h4>${escapeHtml(pick.name)}</h4>
-          <div class="pick-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)}</div>
-        </div>
-        <div class="pick-tags">
+        <div class="pick-card-header">
+          <div>
+            <h4>${escapeHtml(pick.name)}</h4>
+            <div class="pick-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)}</div>
+          </div>
           <span class="pick-tag">${escapeHtml(String(pick.season))}</span>
         </div>
         <div class="fill-buttons">
