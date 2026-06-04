@@ -149,6 +149,9 @@ function showScreen(screenName) {
 }
 
 function ensureRollPanel() {
+  const container = document.getElementById("draftMainContent");
+  if (!container) return;
+
   if (document.getElementById("rollPanel")) {
     rollPanel = document.getElementById("rollPanel");
     rollTitle = document.getElementById("rollTitle");
@@ -156,9 +159,6 @@ function ensureRollPanel() {
     rollChoices = document.getElementById("rollChoices");
     return;
   }
-
-  const slotsGrid = document.querySelector(".slots-grid");
-  const draftScreen = screens.draft;
 
   rollPanel = document.createElement("section");
   rollPanel.id = "rollPanel";
@@ -174,15 +174,12 @@ function ensureRollPanel() {
     <div id="rollChoices" class="roll-choices"></div>
   `;
 
-  if (slotsGrid && draftScreen) {
-    draftScreen.insertBefore(rollPanel, slotsGrid);
-  } else if (draftScreen) {
-    draftScreen.appendChild(rollPanel);
-  }
+  container.appendChild(rollPanel);
 
   const rollPanelTop = document.getElementById("rollPanelTop");
   const draftActions = document.querySelector(".draft-actions");
   if (rollPanelTop && draftActions) {
+    draftActions.style.display = "flex";
     rollPanelTop.appendChild(draftActions);
   }
 
@@ -197,24 +194,25 @@ function injectRollPanelStyles() {
   const style = document.createElement("style");
   style.id = "rollPanelStyles";
   style.textContent = `
-    .roll-panel { margin: 0 0 18px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)), radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 14rem); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); }
+    .roll-panel { margin: 18px 0 0; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)), radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 14rem); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); }
     .roll-panel.rolling { animation: rollPanelPulse 0.35s infinite alternate; }
     @keyframes rollPanelPulse { from { transform: translateY(0); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); } to { transform: translateY(-3px); box-shadow: 0 20px 44px rgba(55, 214, 122, 0.24); } }
     .roll-panel-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
     .roll-kicker { margin-bottom: 6px; color: var(--gold); font-size: 0.78rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.1em; }
     #rollTitle { margin: 0 0 6px; font-size: clamp(1.8rem, 5vw, 3.2rem); line-height: 0.95; letter-spacing: -0.06em; }
     #rollSubline { margin: 0; color: var(--muted); line-height: 1.35; }
-    .roll-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .roll-empty { padding: 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--muted); background: rgba(255, 255, 255, 0.045); }
-    .pick-card { display: grid; gap: 10px; padding: 13px; border: 1px solid rgba(247, 201, 72, 0.22); border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.06); }
+    .roll-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .roll-empty { grid-column: 1 / -1; padding: 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--muted); background: rgba(255, 255, 255, 0.045); }
+    .pick-card { display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 13px; border: 1px solid rgba(247, 201, 72, 0.22); border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.06); }
     .pick-card h4 { margin: 0; font-size: 1rem; line-height: 1.12; letter-spacing: -0.03em; }
     .pick-meta { color: var(--muted); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
     .pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
     .pick-tag { display: inline-flex; width: fit-content; padding: 4px 7px; border-radius: 999px; color: var(--gold); background: rgba(247, 201, 72, 0.09); border: 1px solid rgba(247, 201, 72, 0.22); font-size: 0.66rem; font-weight: 1000; text-transform: uppercase; }
-    .fill-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
-    .fill-btn { flex: 1 1 auto; min-width: 92px; padding: 9px 10px; border: 0; border-radius: 999px; color: #061008; background: linear-gradient(180deg, var(--gold), var(--gold-2)); font-size: 0.78rem; font-weight: 1000; }
+    .fill-buttons { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
+    .fill-btn { flex: 1 1 auto; min-width: 80px; padding: 9px 10px; border: 0; border-radius: 999px; color: #061008; background: linear-gradient(180deg, var(--gold), var(--gold-2)); font-size: 0.78rem; font-weight: 1000; }
     .fill-btn:hover, .fill-btn:focus-visible { transform: translateY(-1px); outline: none; }
-    @media (max-width: 760px) { .roll-choices { grid-template-columns: 1fr; } }
+    @media (max-width: 980px) { .roll-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 620px) { .roll-choices { grid-template-columns: 1fr; } }
   `;
   document.head.appendChild(style);
 }
@@ -234,7 +232,7 @@ function resetSlotCards() {
       <div class="slot-label">${slot}</div>
       <div class="slot-content">
         <h3>${slotLabels[slot]}</h3>
-        <p>Open slot. Waiting for selection...</p>
+        <p>Waiting...</p>
       </div>
     `;
   });
@@ -299,9 +297,9 @@ function landRoll(roll) {
   isRolling = false;
   rollPanel.classList.remove("rolling");
   rollTitle.textContent = roll.value;
-  rollSubline.textContent = "Select any historical player or unit from this team's history to fill an open slot.";
+  rollSubline.textContent = "Select any historical asset from this franchise timeline to fill an open position.";
   renderChoices(candidates);
-  draftInstruction.textContent = `Landed on the ${roll.value}. Pick from their franchise history below.`;
+  draftInstruction.textContent = `Landed on the ${roll.value}. Pick from their history below.`;
   updateDraftControls();
 }
 
@@ -327,7 +325,7 @@ function getCandidatesForRoll(roll) {
   
   const franchiseMatches = eligible
     .filter((player) => player.team === roll.value)
-    .map((player) => ({ ...player, matchType: "Franchise History" }));
+    .map((player) => ({ ...player, matchType: "" }));
 
   let candidates = dedupePlayers(franchiseMatches).sort((a, b) => a.season - b.season);
   return candidates;
@@ -335,7 +333,7 @@ function getCandidatesForRoll(roll) {
 
 function renderChoices(candidates) {
   if (!candidates.length) {
-    rollChoices.innerHTML = `<div class="roll-empty">No valid choices left on this team for your remaining open slots. Roll again!</div>`;
+    rollChoices.innerHTML = `<div class="roll-empty">No valid choices left on this team for your remaining open positions. Roll again!</div>`;
     return;
   }
   rollChoices.innerHTML = candidates.map((pick, index) => {
@@ -344,10 +342,9 @@ function renderChoices(candidates) {
       <article class="pick-card">
         <div>
           <h4>${escapeHtml(pick.name)}</h4>
-          <div class="pick-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)}</div>
+          <div class="pick-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)}</div>
         </div>
         <div class="pick-tags">
-          <span class="pick-tag">${escapeHtml(pick.matchType)}</span>
           <span class="pick-tag">${escapeHtml(String(pick.season))}</span>
         </div>
         <div class="fill-buttons">
@@ -383,7 +380,7 @@ function selectCandidate(index, slotToFill) {
   if (draftComplete()) {
     draftInstruction.textContent = "Draft complete. Simulate the season!";
   } else {
-    draftInstruction.textContent = "Selection locked. Roll for your next team franchise.";
+    draftInstruction.textContent = "Selection locked. Roll for your next franchise.";
   }
   updateDraftControls();
 }
@@ -395,8 +392,8 @@ function renderLockedSlot(slot, pick) {
     <div class="slot-label">${slot}</div>
     <div class="slot-content">
       <h3 class="player-name">${escapeHtml(pick.name)}</h3>
-      <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
-      <p>${slotLabels[slot]} locked.</p>
+      <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(String(pick.season))}</div>
+      <p>Locked.</p>
       ${renderStats(pick.stats)}
     </div>
   `;
@@ -453,6 +450,7 @@ function simulateSeason() {
   showScreen("result");
 }
 
+// Balance adjustments logic
 function calculateSeason(currentRoster) {
   const qb = currentRoster.QB;
   const rb = currentRoster.RB;
@@ -466,12 +464,10 @@ function calculateSeason(currentRoster) {
   const wr2Score = wr2.rating;
   const defScore = def.rating;
 
-  // Offense base math
   const offenseRaw = qbScore * 0.40 + rbScore * 0.20 + wr1Score * 0.22 + wr2Score * 0.18;
   const passGame = (qbScore + wr1Score + wr2Score) / 3;
   const runGame = rbScore;
   
-  // Softer balance penalty so it doesn't drag stars down completely
   const balance = clamp(Math.round(100 - Math.abs(passGame - runGame) * 0.78), 60, 100);
   const balanceBonus = (balance - 88) * 0.15;
 
@@ -480,14 +476,12 @@ function calculateSeason(currentRoster) {
   
   const sameTeamBonus = calculateSameTeamBonus(currentRoster);
   
-  // Era Clash Penalty kept intact but affects a slightly softer overall formula
   const eras = [qb.era, rb.era, wr1.era, wr2.era, def.era];
   const uniqueEras = new Set(eras).size;
   const eraClashPenalty = uniqueEras >= 4 ? 3.5 : (uniqueEras === 3 ? 1.5 : 0);
 
   const totalBeforeVolatility = offense * 0.55 + defense * 0.35 + balance * 0.10 + sameTeamBonus - eraClashPenalty;
   
-  // Less brutal volatility window
   const volatility = randomBetween(-4.5, 3.5);
   const rerollTax = rerollUsed ? 1.0 : 0;
 
@@ -508,7 +502,6 @@ function calculateSameTeamBonus(currentRoster) {
 }
 
 function scoreToWins(total, offense, defense, balance) {
-  // Fairer tier distributions for high ratings
   let wins;
   if (total < 75) wins = weightedRandom([[4,10],[5,20],[6,25],[7,25],[8,20]]);
   else if (total < 82) wins = weightedRandom([[7,5],[8,15],[9,25],[10,30],[11,20],[12,5]]);
@@ -517,7 +510,6 @@ function scoreToWins(total, offense, defense, balance) {
   else if (total < 96) wins = weightedRandom([[13,5],[14,20],[15,45],[16,30]]);
   else wins = weightedRandom([[15,15],[16,50],[17,35]]); 
 
-  // More attainable gatekeeping thresholds for perfect seasons
   if (wins === 17 && !(offense >= 96 && defense >= 94 && balance >= 88)) wins = 16;
   if (wins === 16 && !(offense >= 92 && defense >= 90 && balance >= 84)) wins = 15;
   
@@ -550,7 +542,7 @@ function renderFinalRoster(result) {
       <div class="pos">${slot}</div>
       <div>
         <div class="name">${escapeHtml(pick.name)}</div>
-        <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(pick.era)} · ${escapeHtml(String(pick.season))}</div>
+        <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(String(pick.season))}</div>
       </div>
       <div class="score">${score}</div>
     </div>

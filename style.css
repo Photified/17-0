@@ -319,202 +319,112 @@ h1 {
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* Sticky top tracker code blocks */
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 12px 0;
+  background: rgba(7, 17, 12, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .slot-card {
   position: relative;
-  min-height: 270px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   overflow: hidden;
-  padding: 16px;
-  border-radius: var(--radius);
+  padding: 12px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background:
-    linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)),
-    radial-gradient(circle at top right, rgba(247, 201, 72, 0.11), transparent 10rem);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+  background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .slot-card.empty {
-  background:
-    linear-gradient(160deg, rgba(20, 31, 24, 0.88), rgba(8, 16, 11, 0.88)),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.03) 0,
-      rgba(255, 255, 255, 0.03) 6px,
-      transparent 6px,
-      transparent 12px
-    );
-}
-
-.slot-card.rolling {
-  animation: rollPulse 0.45s infinite alternate;
-}
-
-.slot-card.choosing {
-  min-height: 340px;
-}
-
-@keyframes rollPulse {
-  from {
-    transform: translateY(0);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
-  }
-
-  to {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 44px rgba(55, 214, 122, 0.22);
-  }
+  background: rgba(20, 31, 24, 0.4);
+  border-style: dashed;
 }
 
 .slot-label {
-  display: inline-grid;
-  place-items: center;
-  min-width: 48px;
-  height: 36px;
-  margin-bottom: 18px;
-  padding: 0 10px;
-  border-radius: 999px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  min-width: 32px;
+  height: 22px;
+  font-size: 0.72rem;
+  padding: 0 4px;
+  border-radius: 6px;
   color: #061008;
   background: var(--gold);
   font-weight: 1000;
-  letter-spacing: -0.04em;
+  display: inline-grid;
+  place-items: center;
+}
+
+.slot-content {
+  margin-top: 14px;
 }
 
 .slot-content h3 {
-  margin-bottom: 8px;
-  font-size: 1.25rem;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-}
-
-.slot-card.choosing .slot-content h3 {
-  margin-bottom: 6px;
-  font-size: 1.08rem;
+  margin-bottom: 2px;
+  font-size: 0.95rem;
+  line-height: 1.1;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .slot-content p {
   margin-bottom: 0;
   color: var(--muted);
-  line-height: 1.35;
-}
-
-.slot-card.choosing .slot-content p {
-  font-size: 0.88rem;
+  font-size: 0.75rem;
 }
 
 .player-name {
-  margin-bottom: 7px;
-  font-size: 1.4rem;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
+  margin-bottom: 2px;
+  font-size: 1rem;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-meta {
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   color: var(--gold);
-  font-size: 0.86rem;
-  font-weight: 900;
+  font-size: 0.72rem;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 .stat-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .stat-line {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 6px;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.055);
-  font-size: 0.86rem;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.68rem;
 }
 
 .stat-line strong {
   color: var(--text);
-}
-
-.choice-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.choice-btn {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: center;
-  padding: 10px 11px;
-  border: 1px solid rgba(247, 201, 72, 0.28);
-  border-radius: 11px;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.07);
-  text-align: left;
-  font-size: 0.86rem;
-  line-height: 1.15;
-}
-
-.choice-btn strong {
-  color: var(--text);
-  font-size: 0.9rem;
-  line-height: 1.1;
-}
-
-.choice-btn span {
-  color: var(--gold);
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  text-align: right;
-}
-
-.choice-btn:hover,
-.choice-btn:focus-visible {
-  border-color: rgba(247, 201, 72, 0.7);
-  background: rgba(247, 201, 72, 0.12);
-  outline: none;
-}
-
-.choice-info {
-  display: grid;
-  gap: 4px;
-}
-
-.choice-name-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.choice-tag {
-  display: inline-flex;
-  width: fit-content;
-  padding: 3px 7px;
-  border-radius: 999px;
-  color: var(--muted);
-  background: rgba(255, 255, 255, 0.07);
-  font-size: 0.65rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.choice-meta {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
 }
 
 .draft-actions,
@@ -680,28 +590,11 @@ h1 {
 
 @media (max-width: 980px) {
   .slots-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .slot-card {
-    min-height: 230px;
-  }
-
-  .slot-card.choosing {
-    min-height: 300px;
-  }
-
   .rules-grid,
   .ratings-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .choice-btn {
-    grid-template-columns: 1fr;
-  }
-
-  .choice-btn span {
-    text-align: left;
   }
 }
 
@@ -709,62 +602,51 @@ h1 {
   #appShell {
     padding: 16px;
   }
-
+  .slots-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .top-bar {
     align-items: center;
   }
-
   .title-group {
     gap: 12px;
   }
-
   h1 {
     font-size: 3.4rem;
   }
-
   .subtitle {
     font-size: 0.9rem;
   }
-
   .hero-card,
   .result-card {
     padding: 20px;
   }
-
   .rules-grid,
-  .ratings-grid,
-  .slots-grid {
+  .ratings-grid {
     grid-template-columns: 1fr;
   }
-
   .rule-card {
     min-height: auto;
   }
-
   .draft-header {
     display: block;
   }
-
   .reroll-status {
     justify-content: flex-start;
     margin-top: 12px;
   }
-
   .draft-actions,
   .result-actions {
     display: grid;
     grid-template-columns: 1fr;
   }
-
   .primary-btn,
   .secondary-btn {
     width: 100%;
   }
-
   .final-row {
     grid-template-columns: 54px 1fr;
   }
-
   .final-row .score {
     grid-column: 2;
   }

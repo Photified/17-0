@@ -90,12 +90,13 @@
           </div>
         </div>
 
+        <!-- Sticky Lineup Tracker placed permanently at the top -->
         <div id="slotsGrid" class="slots-grid">
           <article class="slot-card empty" data-slot="QB">
             <div class="slot-label">QB</div>
             <div class="slot-content">
               <h3>Quarterback</h3>
-              <p>Waiting for roll...</p>
+              <p>Waiting...</p>
             </div>
           </article>
 
@@ -103,23 +104,23 @@
             <div class="slot-label">RB</div>
             <div class="slot-content">
               <h3>Running Back</h3>
-              <p>Waiting for roll...</p>
+              <p>Waiting...</p>
             </div>
           </article>
 
           <article class="slot-card empty" data-slot="WR1">
             <div class="slot-label">WR1</div>
             <div class="slot-content">
-              <h3>Wide Receiver 1</h3>
-              <p>Waiting for roll...</p>
+              <h3>WR 1</h3>
+              <p>Waiting...</p>
             </div>
           </article>
 
           <article class="slot-card empty" data-slot="WR2">
             <div class="slot-label">WR2</div>
             <div class="slot-content">
-              <h3>Wide Receiver 2</h3>
-              <p>Waiting for roll...</p>
+              <h3>WR 2</h3>
+              <p>Waiting...</p>
             </div>
           </article>
 
@@ -127,20 +128,22 @@
             <div class="slot-label">DEF</div>
             <div class="slot-content">
               <h3>Defense</h3>
-              <p>Waiting for roll...</p>
+              <p>Waiting...</p>
             </div>
           </article>
         </div>
 
-        <div class="draft-actions">
+        <!-- The content container where player selection panels will load dynamically -->
+        <div id="draftMainContent"></div>
+
+        <!-- Draft Actions fallback array -->
+        <div class="draft-actions" style="display: none;">
           <button id="rollBtn" class="primary-btn" type="button">
             Roll Next Pick
           </button>
-
           <button id="rerollBtn" class="secondary-btn" type="button" disabled>
             Re-Roll Team
           </button>
-
           <button id="simulateBtn" class="primary-btn ghosted" type="button" disabled>
             Simulate Season
           </button>
