@@ -24,10 +24,7 @@
     <header class="top-bar">
       <div class="title-group">
         <img src="icon-192.png" alt="17-0 Logo" class="top-logo" />
-        <div>
-          <h1>17-0</h1>
-          <p class="subtitle">Build a perfect historical football season.</p>
-        </div>
+        <h1 class="main-title">Build the Perfect Season</h1>
       </div>
 
       <button id="helpBtn" class="small-btn" type="button">
@@ -38,8 +35,6 @@
     <main>
       <section id="introScreen" class="screen active">
         <div class="hero-card">
-          <div class="badge">NFL-inspired stat simulator</div>
-
           <h2>Can you build a 17-0 team?</h2>
 
           <p>
@@ -90,7 +85,6 @@
           </div>
         </div>
 
-        <!-- Sticky Lineup Tracker placed permanently at the top -->
         <div id="slotsGrid" class="slots-grid">
           <article class="slot-card empty" data-slot="QB">
             <div class="slot-label">QB</div>
@@ -133,10 +127,8 @@
           </article>
         </div>
 
-        <!-- The content container where player selection panels will load dynamically -->
         <div id="draftMainContent"></div>
 
-        <!-- Draft Actions fallback array -->
         <div class="draft-actions" style="display: none;">
           <button id="rollBtn" class="primary-btn" type="button">
             Roll Next Pick

@@ -73,13 +73,15 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 16px;
+  overflow: hidden;
 }
 
 .top-logo {
-  width: clamp(52px, 10vw, 76px);
+  width: clamp(64px, 15vw, 88px);
   height: auto;
   border-radius: 18px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
 }
 
 h1,
@@ -89,21 +91,15 @@ p {
   margin-top: 0;
 }
 
-h1 {
-  margin-bottom: 4px;
-  font-size: clamp(2.4rem, 8vw, 5.2rem);
-  line-height: 0.88;
+h1.main-title {
+  margin-bottom: 0;
+  font-size: clamp(1.1rem, 4.5vw, 2.2rem);
+  line-height: 1.1;
   color: var(--text);
+  white-space: nowrap;
   text-shadow:
     0 4px 0 rgba(0, 0, 0, 0.4),
     0 0 24px rgba(55, 214, 122, 0.22);
-}
-
-.subtitle {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 
 .screen {
@@ -155,27 +151,11 @@ h1 {
   z-index: 1;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  margin-bottom: 18px;
-  padding: 8px 12px;
-  border: 1px solid rgba(247, 201, 72, 0.45);
-  border-radius: 6px;
-  color: var(--gold);
-  background: rgba(247, 201, 72, 0.08);
-  font-size: 0.8rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .hero-card h2,
 .result-card h2,
 .draft-header h2 {
   margin-bottom: 12px;
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: clamp(1.8rem, 5vw, 4rem);
   line-height: 0.98;
   letter-spacing: -0.05em;
 }
@@ -183,7 +163,7 @@ h1 {
 .hero-card p {
   max-width: 720px;
   color: var(--muted);
-  font-size: clamp(1rem, 2.2vw, 1.18rem);
+  font-size: clamp(0.95rem, 2.2vw, 1.18rem);
   line-height: 1.55;
 }
 
@@ -191,33 +171,35 @@ h1 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin: 28px 0;
+  margin: 24px 0;
 }
 
 .rule-card {
-  min-height: 130px;
-  padding: 16px;
+  padding: 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.045);
+  display: flex;
+  flex-direction: column;
 }
 
 .rule-card span {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  margin-bottom: 12px;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 10px;
   border-radius: 6px;
   color: #07110c;
   background: var(--gold);
   font-weight: 900;
+  font-size: 0.85rem;
 }
 
 .rule-card p {
   margin: 0;
   color: var(--text);
-  font-size: 0.96rem;
+  font-size: 0.9rem;
   line-height: 1.35;
 }
 
@@ -654,22 +636,23 @@ h1 {
   .title-group {
     gap: 12px;
   }
-  h1 {
-    font-size: 3.4rem;
-  }
-  .subtitle {
-    font-size: 0.9rem;
-  }
   .hero-card,
   .result-card {
     padding: 20px;
   }
-  .rules-grid,
-  .ratings-grid {
-    grid-template-columns: 1fr;
+  .rules-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 16px 0;
   }
   .rule-card {
-    min-height: auto;
+    padding: 10px;
+  }
+  .rule-card p {
+    font-size: 0.8rem;
+  }
+  .ratings-grid {
+    grid-template-columns: 1fr;
   }
   .draft-header {
     display: block;
