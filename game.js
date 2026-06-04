@@ -42,7 +42,6 @@ const shareBtn = document.getElementById("shareBtn");
 const helpBtn = document.getElementById("helpBtn");
 const helpModal = document.getElementById("helpModal");
 const draftInstruction = document.getElementById("draftInstruction");
-const rerollPill = document.getElementById("rerollPill");
 const installBtn = document.getElementById("installBtn");
 const installHelpText = document.getElementById("installHelpText");
 
@@ -197,7 +196,7 @@ function injectRollPanelStyles() {
     .roll-panel { margin: 18px 0 0; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94)), radial-gradient(circle at top right, rgba(247, 201, 72, 0.12), transparent 14rem); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); }
     .roll-panel.rolling { animation: rollPanelPulse 0.35s infinite alternate; }
     @keyframes rollPanelPulse { from { transform: translateY(0); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28); } to { transform: translateY(-3px); box-shadow: 0 20px 44px rgba(55, 214, 122, 0.24); } }
-    .roll-panel-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+    .roll-panel-top { display: flex; flex-direction: column; align-items: stretch; gap: 14px; margin-bottom: 14px; }
     .roll-kicker { margin-bottom: 6px; color: var(--gold); font-size: 0.78rem; font-weight: 1000; text-transform: uppercase; letter-spacing: 0.1em; }
     #rollTitle { margin: 0 0 6px; font-size: clamp(1.8rem, 5vw, 3.2rem); line-height: 0.95; letter-spacing: -0.06em; }
     #rollSubline { margin: 0; color: var(--muted); line-height: 1.35; }
@@ -426,21 +425,13 @@ function updateDraftControls() {
   simulateBtn.disabled = !complete || isRolling;
 
   if (complete) {
-    simulateBtn.style.display = "inline-block";
+    simulateBtn.style.display = "block";
     rollBtn.style.display = "none";
     rerollBtn.style.display = "none";
   } else {
     simulateBtn.style.display = "none";
-    rollBtn.style.display = "inline-block";
-    rerollBtn.style.display = "inline-block";
-  }
-
-  if (rerollUsed) {
-    rerollPill.textContent = "Re-roll Used";
-    rerollPill.classList.add("used");
-  } else {
-    rerollPill.textContent = "Re-roll Available";
-    rerollPill.classList.remove("used");
+    rollBtn.style.display = "block";
+    rerollBtn.style.display = "block";
   }
 }
 
