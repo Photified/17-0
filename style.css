@@ -614,8 +614,10 @@ h1.main-title {
 }
 
 @media (max-width: 980px) {
-  .rules-grid,
-  .ratings-grid {
+  .slots-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .rules-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -672,6 +674,7 @@ h1.main-title {
   }
   h1.main-title {
     font-size: 1.15rem;
+    white-space: nowrap;
   }
   .hero-card,
   .result-card {
@@ -696,7 +699,20 @@ h1.main-title {
     font-size: 0.8rem;
   }
   .ratings-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .rating-card {
+    padding: 8px 4px;
+    text-align: center;
+  }
+  .rating-card span {
+    font-size: 0.55rem;
+    letter-spacing: 0;
+    margin-bottom: 2px;
+  }
+  .rating-card strong {
+    font-size: 1.25rem;
   }
   .draft-header {
     display: block;
