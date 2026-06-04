@@ -393,7 +393,6 @@ function renderLockedSlot(slot, pick) {
     <div class="slot-content">
       <h3 class="player-name">${escapeHtml(pick.name)}</h3>
       <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(String(pick.season))}</div>
-      <p>Locked.</p>
       ${renderStats(pick.stats)}
     </div>
   `;
@@ -450,7 +449,6 @@ function simulateSeason() {
   showScreen("result");
 }
 
-// Balance adjustments logic
 function calculateSeason(currentRoster) {
   const qb = currentRoster.QB;
   const rb = currentRoster.RB;
@@ -536,17 +534,42 @@ function getResultSummary(wins, offense, defense, balance, sameTeamBonus) {
 }
 
 function renderFinalRoster(result) {
-  const rows = [["QB", result.roster.QB, result.qbScore], ["RB", result.roster.RB, result.rbScore], ["WR1", result.roster.WR1, result.wr1Score], ["WR2", result.roster.WR2, result.wr2Score], ["DEF", result.roster.DEF, result.defScore]];
+  const rows = [
+    ["QB", result.roster.QB, result.qbScore], 
+    ["RB", result.roster.RB, result.rbScore], 
+    ["WR1", result.roster.WR1, result.wr1Score], 
+    ["WR2", result.roster.WR2, result.wr2Score], 
+    ["DEF", result.roster.DEF, result.defScore]
+  ];
+  
   finalRoster.innerHTML = rows.map(([slot, pick, score]) => `
-    <div class="final-row">
-      <div class="pos">${slot}</div>
-      <div>
-        <div class="name">${escapeHtml(pick.name)}</div>
-        <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(String(pick.season))}</div>
+    <div class="final-row accordion-row">
+      <div class="final-row-header">
+        <div class="pos">${slot}</div>
+        <div class="info">
+          <div class="name">${escapeHtml(pick.name)}</div>
+          <div class="player-meta">${escapeHtml(pick.slot)} · ${escapeHtml(pick.team)} · ${escapeHtml(String(pick.season))}</div>
+        </div>
+        <div class="score-wrap">
+          <div class="score">${score}</div>
+          <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
       </div>
-      <div class="score">${score}</div>
+      <div class="final-row-body">
+        ${renderStats(pick.stats)}
+      </div>
     </div>
   `).join("");
+
+  // Attach interactive click listeners for expanding the player stats
+  const accordions = finalRoster.querySelectorAll('.accordion-row');
+  accordions.forEach(acc => {
+    acc.addEventListener('click', () => {
+      acc.classList.toggle('expanded');
+    });
+  });
 }
 
 function buildShareText(result) {

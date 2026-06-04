@@ -319,7 +319,6 @@ h1 {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* Sticky top tracker code blocks */
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -339,9 +338,9 @@ h1 {
   min-height: 110px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: hidden;
-  padding: 12px;
+  padding: 38px 12px 12px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: linear-gradient(160deg, rgba(23, 57, 35, 0.94), rgba(10, 26, 17, 0.94));
@@ -370,7 +369,7 @@ h1 {
 }
 
 .slot-content {
-  margin-top: 14px;
+  margin-top: 0;
 }
 
 .slot-content h3 {
@@ -498,14 +497,57 @@ h1 {
 }
 
 .final-row {
-  display: grid;
-  grid-template-columns: 70px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.045);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.final-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.final-row-header {
+  display: grid;
+  grid-template-columns: 50px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.final-row-body {
+  display: none;
+  padding: 0 14px 14px 14px;
+}
+
+.final-row-body .stat-list {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.final-row.expanded .final-row-body {
+  display: block;
+}
+
+.score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chevron {
+  color: var(--muted);
+  transition: transform 0.25s ease;
+}
+
+.final-row.expanded .chevron {
+  transform: rotate(180deg);
 }
 
 .final-row .pos {
@@ -513,13 +555,14 @@ h1 {
   font-weight: 1000;
 }
 
-.final-row .name {
+.final-row .info .name {
   font-weight: 900;
 }
 
 .final-row .score {
   color: var(--green);
   font-weight: 1000;
+  font-size: 1.2rem;
 }
 
 .modal {
@@ -644,10 +687,7 @@ h1 {
   .secondary-btn {
     width: 100%;
   }
-  .final-row {
-    grid-template-columns: 54px 1fr;
-  }
-  .final-row .score {
-    grid-column: 2;
+  .final-row-header {
+    grid-template-columns: 44px 1fr auto;
   }
 }
